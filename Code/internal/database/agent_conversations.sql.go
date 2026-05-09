@@ -12,19 +12,25 @@ import (
 )
 
 const createAgentConversation = `-- name: CreateAgentConversation :one
-INSERT INTO agent_conversations (client_id)
-VALUES ($1)
-RETURNING id, created_at, updated_at, client_id
+INSERT INTO agent_conversations (client_id, user_id)
+VALUES ($1, $2)
+RETURNING id, created_at, updated_at, client_id, user_id
 `
 
-func (q *Queries) CreateAgentConversation(ctx context.Context, clientID uuid.NullUUID) (AgentConversation, error) {
-	row := q.db.QueryRowContext(ctx, createAgentConversation, clientID)
+type CreateAgentConversationParams struct {
+	ClientID uuid.NullUUID `json:"client_id"`
+	UserID   uuid.NullUUID `json:"user_id"`
+}
+
+func (q *Queries) CreateAgentConversation(ctx context.Context, arg CreateAgentConversationParams) (AgentConversation, error) {
+	row := q.db.QueryRowContext(ctx, createAgentConversation, arg.ClientID, arg.UserID)
 	var i AgentConversation
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ClientID,
+		&i.UserID,
 	)
 	return i, err
 }
@@ -76,7 +82,7 @@ func (q *Queries) DeleteAgentConversationMessages(ctx context.Context, conversat
 }
 
 const getAgentConversation = `-- name: GetAgentConversation :one
-SELECT id, created_at, updated_at, client_id
+SELECT id, created_at, updated_at, client_id, user_id
 FROM agent_conversations
 WHERE id = $1
 `
@@ -89,6 +95,7 @@ func (q *Queries) GetAgentConversation(ctx context.Context, id uuid.UUID) (Agent
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ClientID,
+		&i.UserID,
 	)
 	return i, err
 }
@@ -131,7 +138,7 @@ func (q *Queries) ListAgentConversationMessages(ctx context.Context, conversatio
 }
 
 const listAgentConversations = `-- name: ListAgentConversations :many
-SELECT id, created_at, updated_at, client_id
+SELECT id, created_at, updated_at, client_id, user_id
 FROM agent_conversations
 ORDER BY updated_at DESC
 `
@@ -150,6 +157,7 @@ func (q *Queries) ListAgentConversations(ctx context.Context) ([]AgentConversati
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.ClientID,
+			&i.UserID,
 		); err != nil {
 			return nil, err
 		}
@@ -165,7 +173,7 @@ func (q *Queries) ListAgentConversations(ctx context.Context) ([]AgentConversati
 }
 
 const listAgentConversationsByClient = `-- name: ListAgentConversationsByClient :many
-SELECT id, created_at, updated_at, client_id
+SELECT id, created_at, updated_at, client_id, user_id
 FROM agent_conversations
 WHERE client_id = $1
 ORDER BY updated_at DESC
@@ -185,6 +193,43 @@ func (q *Queries) ListAgentConversationsByClient(ctx context.Context, clientID u
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.ClientID,
+			&i.UserID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAgentConversationsByUser = `-- name: ListAgentConversationsByUser :many
+SELECT id, created_at, updated_at, client_id, user_id
+FROM agent_conversations
+WHERE user_id = $1
+ORDER BY updated_at DESC
+`
+
+func (q *Queries) ListAgentConversationsByUser(ctx context.Context, userID uuid.NullUUID) ([]AgentConversation, error) {
+	rows, err := q.db.QueryContext(ctx, listAgentConversationsByUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AgentConversation
+	for rows.Next() {
+		var i AgentConversation
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ClientID,
+			&i.UserID,
 		); err != nil {
 			return nil, err
 		}

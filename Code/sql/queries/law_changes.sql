@@ -14,6 +14,17 @@ FROM law_changes
 WHERE law_id_old = $1 OR law_id_new = $1
 ORDER BY created_at DESC;
 
+-- name: GetLawChangesBetween :many
+SELECT *
+FROM law_changes
+WHERE law_id_old = $1 AND law_id_new = $2
+ORDER BY created_at DESC;
+
+-- name: CountRecentLawChanges :one
+SELECT COUNT(*)
+FROM law_changes
+WHERE created_at >= NOW() - INTERVAL '24 hours';
+
 -- name: ListLawChangesBySublaw :many
 SELECT *
 FROM law_changes

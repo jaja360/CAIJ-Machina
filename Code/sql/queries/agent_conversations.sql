@@ -1,6 +1,6 @@
 -- name: CreateAgentConversation :one
-INSERT INTO agent_conversations (client_id)
-VALUES ($1)
+INSERT INTO agent_conversations (client_id, user_id)
+VALUES ($1, $2)
 RETURNING *;
 
 -- name: GetAgentConversation :one
@@ -17,6 +17,12 @@ ORDER BY updated_at DESC;
 SELECT *
 FROM agent_conversations
 WHERE client_id = $1
+ORDER BY updated_at DESC;
+
+-- name: ListAgentConversationsByUser :many
+SELECT *
+FROM agent_conversations
+WHERE user_id = $1
 ORDER BY updated_at DESC;
 
 -- name: TouchAgentConversation :exec

@@ -211,7 +211,7 @@ func (cfg *apiConfig) IngestHTMLLegislation(ctx context.Context, sourceFile, htm
 	if err != nil {
 		return ChunkDocument{}, err
 	}
-	if err := cfg.storeChunkDocument(ctx, document); err != nil {
+	if _, _, err := cfg.storeChunkDocument(ctx, document); err != nil {
 		return ChunkDocument{}, err
 	}
 	return document, nil
@@ -885,25 +885,26 @@ func chunkToSet(values []string) map[string]struct{} {
 	return set
 }
 
-func (cfg *apiConfig) storeChunkDocument(ctx context.Context, document ChunkDocument) error {
+func (cfg *apiConfig) storeChunkDocument(ctx context.Context, document ChunkDocument) (database.Law, []database.Sublaw, error) {
 	law, err := cfg.db.CreateLaw(ctx, database.CreateLawParams{
 		Citation:     document.Citation,
 		DatePlaced:   chunkNullTime(document.DatePlaced),
 		DateReplaced: chunkNullTime(document.DateReplaced),
 	})
 	if err != nil {
-		return err
+		return database.Law{}, nil, err
 	}
+	sublaws := make([]database.Sublaw, 0, len(document.Records))
 	for i, record := range document.Records {
 		embedding, err := chunkJSONText(record.Embedding)
 		if err != nil {
-			return err
+			return database.Law{}, nil, err
 		}
 		keywords, err := chunkJSONText(record.Domains)
 		if err != nil {
-			return err
+			return database.Law{}, nil, err
 		}
-		_, err = cfg.db.CreateSublaw(ctx, database.CreateSublawParams{
+		sublaw, err := cfg.db.CreateSublaw(ctx, database.CreateSublawParams{
 			Citation:   record.Citation,
 			Sequence:   chunkNullString(strconv.Itoa(i + 1)),
 			Anchor:     chunkNullString(record.SectionAnchor),
@@ -913,10 +914,11 @@ func (cfg *apiConfig) storeChunkDocument(ctx context.Context, document ChunkDocu
 			DocumentID: law.ID,
 		})
 		if err != nil {
-			return err
+			return database.Law{}, nil, err
 		}
+		sublaws = append(sublaws, sublaw)
 	}
-	return nil
+	return law, sublaws, nil
 }
 
 func chunkNullString(value string) sql.NullString {

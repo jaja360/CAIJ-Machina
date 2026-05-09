@@ -3,6 +3,12 @@ INSERT INTO keywords (name)
 VALUES ($1)
 RETURNING *;
 
+-- name: UpsertKeywordByName :one
+INSERT INTO keywords (name)
+VALUES ($1)
+ON CONFLICT (name) DO UPDATE SET updated_at = NOW()
+RETURNING *;
+
 -- name: GetKeyword :one
 SELECT *
 FROM keywords
@@ -18,6 +24,11 @@ SELECT *
 FROM keywords
 WHERE name = $1
 ORDER BY created_at ASC;
+
+-- name: GetKeywordByName :one
+SELECT *
+FROM keywords
+WHERE name = $1;
 
 -- name: SearchKeywords :many
 SELECT *

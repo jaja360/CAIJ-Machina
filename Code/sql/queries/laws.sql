@@ -13,6 +13,11 @@ SELECT *
 FROM laws
 ORDER BY created_at DESC;
 
+-- name: CountRecentLaws :one
+SELECT COUNT(*)
+FROM laws
+WHERE created_at >= NOW() - INTERVAL '24 hours';
+
 -- name: ListActiveLaws :many
 SELECT *
 FROM laws

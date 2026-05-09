@@ -11,6 +11,19 @@ import (
 	"github.com/google/uuid"
 )
 
+const countRecentLawChanges = `-- name: CountRecentLawChanges :one
+SELECT COUNT(*)
+FROM law_changes
+WHERE created_at >= NOW() - INTERVAL '24 hours'
+`
+
+func (q *Queries) CountRecentLawChanges(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countRecentLawChanges)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createLawChange = `-- name: CreateLawChange :one
 INSERT INTO law_changes (explanation, law_id_old, law_id_new, sub_law_id_old, sub_law_id_new)
 VALUES ($1, $2, $3, $4, $5)
@@ -77,6 +90,50 @@ func (q *Queries) GetLawChange(ctx context.Context, id uuid.UUID) (LawChange, er
 		&i.SubLawIDNew,
 	)
 	return i, err
+}
+
+const getLawChangesBetween = `-- name: GetLawChangesBetween :many
+SELECT id, created_at, updated_at, explanation, law_id_old, law_id_new, sub_law_id_old, sub_law_id_new
+FROM law_changes
+WHERE law_id_old = $1 AND law_id_new = $2
+ORDER BY created_at DESC
+`
+
+type GetLawChangesBetweenParams struct {
+	LawIDOld uuid.UUID `json:"law_id_old"`
+	LawIDNew uuid.UUID `json:"law_id_new"`
+}
+
+func (q *Queries) GetLawChangesBetween(ctx context.Context, arg GetLawChangesBetweenParams) ([]LawChange, error) {
+	rows, err := q.db.QueryContext(ctx, getLawChangesBetween, arg.LawIDOld, arg.LawIDNew)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []LawChange
+	for rows.Next() {
+		var i LawChange
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Explanation,
+			&i.LawIDOld,
+			&i.LawIDNew,
+			&i.SubLawIDOld,
+			&i.SubLawIDNew,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listLawChangesByLaw = `-- name: ListLawChangesByLaw :many

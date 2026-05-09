@@ -16,6 +16,7 @@ type AgentConversation struct {
 	CreatedAt time.Time     `json:"created_at"`
 	UpdatedAt time.Time     `json:"updated_at"`
 	ClientID  uuid.NullUUID `json:"client_id"`
+	UserID    uuid.NullUUID `json:"user_id"`
 }
 
 type AgentConversationMessage struct {
@@ -25,6 +26,19 @@ type AgentConversationMessage struct {
 	ConversationID uuid.UUID `json:"conversation_id"`
 	Speaker        string    `json:"speaker"`
 	Message        string    `json:"message"`
+}
+
+type Alert struct {
+	ID            uuid.UUID     `json:"id"`
+	CreatedAt     time.Time     `json:"created_at"`
+	UpdatedAt     time.Time     `json:"updated_at"`
+	UserID        uuid.NullUUID `json:"user_id"`
+	ClientID      uuid.NullUUID `json:"client_id"`
+	ContactMethod string        `json:"contact_method"`
+	SendAt        time.Time     `json:"send_at"`
+	Priority      string        `json:"priority"`
+	LawChangeID   uuid.NullUUID `json:"law_change_id"`
+	Message       string        `json:"message"`
 }
 
 type Client struct {

@@ -12,7 +12,7 @@ import (
 
 func (c *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 	type input struct {
-		Email string `json:"email"`
+		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
 	decoder := json.NewDecoder(r.Body)
@@ -30,14 +30,14 @@ func (c *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
- 	if passwordOK, err := auth.CheckPasswordHash(p.Password, user.HashedPassword); err != nil {
+	if passwordOK, err := auth.CheckPasswordHash(p.Password, user.HashedPassword); err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Error checking password")
 	} else if !passwordOK {
 		respondWithError(w, http.StatusUnauthorized, "Incorrect email or password")
 	} else {
 		type loginResponse struct {
 			database.User
-			Token string `json:"token"`
+			Token        string `json:"token"`
 			RefreshToken string `json:"refresh_token"`
 		}
 		jwt, err := auth.MakeJWT(user.ID, c.jwtSecret, time.Hour)
@@ -47,8 +47,8 @@ func (c *apiConfig) login(w http.ResponseWriter, r *http.Request) {
 		}
 		refresh := auth.MakeRefreshToken()
 		err = c.db.InsertRefreshToken(r.Context(), database.InsertRefreshTokenParams{
-			UserID: user.ID,
-			Token: refresh,
+			UserID:    user.ID,
+			Token:     refresh,
 			ExpiresAt: time.Now().Add(60 * 24 * time.Hour),
 		})
 		if err != nil {

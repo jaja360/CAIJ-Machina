@@ -12,6 +12,19 @@ import (
 	"github.com/google/uuid"
 )
 
+const countRecentLaws = `-- name: CountRecentLaws :one
+SELECT COUNT(*)
+FROM laws
+WHERE created_at >= NOW() - INTERVAL '24 hours'
+`
+
+func (q *Queries) CountRecentLaws(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countRecentLaws)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createLaw = `-- name: CreateLaw :one
 INSERT INTO laws (citation, date_placed, date_replaced)
 VALUES ($1, $2, $3)

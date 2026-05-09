@@ -58,6 +58,24 @@ func (q *Queries) GetKeyword(ctx context.Context, id uuid.UUID) (Keyword, error)
 	return i, err
 }
 
+const getKeywordByName = `-- name: GetKeywordByName :one
+SELECT id, created_at, updated_at, name
+FROM keywords
+WHERE name = $1
+`
+
+func (q *Queries) GetKeywordByName(ctx context.Context, name string) (Keyword, error) {
+	row := q.db.QueryRowContext(ctx, getKeywordByName, name)
+	var i Keyword
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+	)
+	return i, err
+}
+
 const listKeywords = `-- name: ListKeywords :many
 SELECT id, created_at, updated_at, name
 FROM keywords
@@ -176,6 +194,25 @@ type UpdateKeywordParams struct {
 
 func (q *Queries) UpdateKeyword(ctx context.Context, arg UpdateKeywordParams) (Keyword, error) {
 	row := q.db.QueryRowContext(ctx, updateKeyword, arg.ID, arg.Name)
+	var i Keyword
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+	)
+	return i, err
+}
+
+const upsertKeywordByName = `-- name: UpsertKeywordByName :one
+INSERT INTO keywords (name)
+VALUES ($1)
+ON CONFLICT (name) DO UPDATE SET updated_at = NOW()
+RETURNING id, created_at, updated_at, name
+`
+
+func (q *Queries) UpsertKeywordByName(ctx context.Context, name string) (Keyword, error) {
+	row := q.db.QueryRowContext(ctx, upsertKeywordByName, name)
 	var i Keyword
 	err := row.Scan(
 		&i.ID,
