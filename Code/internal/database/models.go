@@ -11,6 +11,85 @@ import (
 	"github.com/google/uuid"
 )
 
+type AgentConversation struct {
+	ID        uuid.UUID     `json:"id"`
+	CreatedAt time.Time     `json:"created_at"`
+	UpdatedAt time.Time     `json:"updated_at"`
+	ClientID  uuid.NullUUID `json:"client_id"`
+}
+
+type AgentConversationMessage struct {
+	ID             uuid.UUID `json:"id"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+	ConversationID uuid.UUID `json:"conversation_id"`
+	Speaker        string    `json:"speaker"`
+	Message        string    `json:"message"`
+}
+
+type Client struct {
+	ID        uuid.UUID      `json:"id"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	Name      string         `json:"name"`
+	Icon      sql.NullString `json:"icon"`
+}
+
+type ClientMetadata struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	ClientID  uuid.UUID `json:"client_id"`
+	Keyword   uuid.UUID `json:"keyword"`
+}
+
+type Document struct {
+	ID           uuid.UUID    `json:"id"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+	Citation     string       `json:"citation"`
+	DatePlaced   sql.NullTime `json:"date_placed"`
+	DateReplaced sql.NullTime `json:"date_replaced"`
+}
+
+type DocumentRevision struct {
+	ID               uuid.UUID `json:"id"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+	Explanation      string    `json:"explanation"`
+	DocumentIDOld    uuid.UUID `json:"document_id_old"`
+	DocumentIDNew    uuid.UUID `json:"document_id_new"`
+	SubDocumentIDOld uuid.UUID `json:"sub_document_id_old"`
+	SubDocumentIDNew uuid.UUID `json:"sub_document_id_new"`
+}
+
+type Keyword struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Name      string    `json:"name"`
+}
+
+type Law struct {
+	ID           uuid.UUID    `json:"id"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+	Citation     string       `json:"citation"`
+	DatePlaced   sql.NullTime `json:"date_placed"`
+	DateReplaced sql.NullTime `json:"date_replaced"`
+}
+
+type LawChange struct {
+	ID          uuid.UUID `json:"id"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	Explanation string    `json:"explanation"`
+	LawIDOld    uuid.UUID `json:"law_id_old"`
+	LawIDNew    uuid.UUID `json:"law_id_new"`
+	SubLawIDOld uuid.UUID `json:"sub_law_id_old"`
+	SubLawIDNew uuid.UUID `json:"sub_law_id_new"`
+}
+
 type RefreshToken struct {
 	Token     string       `json:"token"`
 	CreatedAt time.Time    `json:"created_at"`
@@ -20,10 +99,43 @@ type RefreshToken struct {
 	UserID    uuid.UUID    `json:"user_id"`
 }
 
+type Subdocument struct {
+	ID           uuid.UUID    `json:"id"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+	Name         string       `json:"name"`
+	DocumentID   uuid.UUID    `json:"document_id"`
+	Citation     string       `json:"citation"`
+	DatePlaced   sql.NullTime `json:"date_placed"`
+	DateReplaced sql.NullTime `json:"date_replaced"`
+}
+
+type Sublaw struct {
+	ID         uuid.UUID      `json:"id"`
+	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
+	Citation   string         `json:"citation"`
+	Sequence   sql.NullString `json:"sequence"`
+	Anchor     sql.NullString `json:"anchor"`
+	Content    sql.NullString `json:"content"`
+	Embedding  sql.NullString `json:"embedding"`
+	Keywords   sql.NullString `json:"keywords"`
+	DocumentID uuid.UUID      `json:"document_id"`
+}
+
 type User struct {
 	ID             uuid.UUID `json:"id"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 	Email          string    `json:"email"`
 	HashedPassword string    `json:"-"`
+	JobTitle       string    `json:"job_title"`
+}
+
+type UserMetadata struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	UserID    uuid.UUID `json:"user_id"`
+	Keyword   uuid.UUID `json:"keyword"`
 }

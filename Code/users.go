@@ -11,6 +11,7 @@ import (
 type userInput struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	JobTitle string `json:"job_title"`
 }
 
 func (c *apiConfig) putUsers(w http.ResponseWriter, r *http.Request) {
@@ -39,6 +40,7 @@ func (c *apiConfig) putUsers(w http.ResponseWriter, r *http.Request) {
 		ID:             userID,
 		Email:          p.Email,
 		HashedPassword: hashedPwd,
+		JobTitle:       normalizeUserJobTitle(p.JobTitle),
 	}); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {
@@ -61,9 +63,17 @@ func (c *apiConfig) postUsers(w http.ResponseWriter, r *http.Request) {
 	if out, err := c.db.CreateUser(r.Context(), database.CreateUserParams{
 		Email:          p.Email,
 		HashedPassword: hashedPwd,
+		JobTitle:       normalizeUserJobTitle(p.JobTitle),
 	}); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {
 		respondWithJSON(w, http.StatusCreated, out)
 	}
+}
+
+func normalizeUserJobTitle(jobTitle string) string {
+	if jobTitle == "" {
+		return "Unknown"
+	}
+	return jobTitle
 }

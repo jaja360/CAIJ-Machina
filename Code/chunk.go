@@ -887,7 +887,6 @@ func chunkToSet(values []string) map[string]struct{} {
 
 func (cfg *apiConfig) storeChunkDocument(ctx context.Context, document ChunkDocument) error {
 	law, err := cfg.db.CreateLaw(ctx, database.CreateLawParams{
-		Name:         document.DocumentTitle,
 		Citation:     document.Citation,
 		DatePlaced:   chunkNullTime(document.DatePlaced),
 		DateReplaced: chunkNullTime(document.DateReplaced),
@@ -904,15 +903,16 @@ func (cfg *apiConfig) storeChunkDocument(ctx context.Context, document ChunkDocu
 		if err != nil {
 			return err
 		}
-		if err := cfg.db.CreateSublaw(ctx, database.CreateSublawParams{
-			DocumentID: law.ID,
+		_, err = cfg.db.CreateSublaw(ctx, database.CreateSublawParams{
 			Citation:   record.Citation,
 			Sequence:   chunkNullString(strconv.Itoa(i + 1)),
 			Anchor:     chunkNullString(record.SectionAnchor),
-			Text:       chunkNullString(record.Text),
+			Content:    chunkNullString(record.Text),
 			Embedding:  embedding,
 			Keywords:   keywords,
-		}); err != nil {
+			DocumentID: law.ID,
+		})
+		if err != nil {
 			return err
 		}
 	}

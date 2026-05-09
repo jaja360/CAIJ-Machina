@@ -3,7 +3,7 @@ CREATE TABLE agent_conversations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  client_id UUID NULL REFERENCES client(id)
+  client_id UUID NULL REFERENCES clients(id) ON DELETE SET NULL
 );
 
 CREATE TABLE agent_conversation_messages (

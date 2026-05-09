@@ -1,5 +1,5 @@
 -- +goose up
-CREATE TABLE law (
+CREATE TABLE subdocuments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -11,4 +11,4 @@ CREATE TABLE law (
 );
 
 -- +goose down
-DROP TABLE law;
+DROP TABLE subdocuments;
