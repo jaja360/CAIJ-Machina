@@ -169,6 +169,7 @@
       "description": "Les contrats importés sont analysés automatiquement à chaque nouvelle alerte.",
       "header": "Clients actifs",
       "count": "{{count}} contrats",
+      "empty": "Aucun client configuré pour le moment.",
       "manage": "Gérer",
       "add": "+ Ajouter",
       "import": "Importer des contrats (.pdf, .docx) — analysés automatiquement"

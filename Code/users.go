@@ -33,10 +33,21 @@ func (c *apiConfig) putUsers(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusBadRequest, "Invalid JSON")
 		return
 	}
-	hashedPwd, err := auth.HashPassword(p.Password)
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Error hashing password")
-		return
+	hashedPwd := ""
+	if p.Password == "" {
+		current, err := c.db.GetUserByID(r.Context(), userID)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Error updating user")
+			return
+		}
+		hashedPwd = current.HashedPassword
+	} else {
+		var err error
+		hashedPwd, err = auth.HashPassword(p.Password)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Error hashing password")
+			return
+		}
 	}
 	if user, err := c.db.UpdateUserInfo(r.Context(), database.UpdateUserInfoParams{
 		ID:             userID,

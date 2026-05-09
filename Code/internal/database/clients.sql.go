@@ -13,18 +13,19 @@ import (
 )
 
 const createClient = `-- name: CreateClient :one
-INSERT INTO clients (name, icon)
-VALUES ($1, $2)
-RETURNING id, created_at, updated_at, name, icon
+INSERT INTO clients (name, icon, user_id)
+VALUES ($1, $2, $3)
+RETURNING id, created_at, updated_at, name, icon, user_id
 `
 
 type CreateClientParams struct {
-	Name string         `json:"name"`
-	Icon sql.NullString `json:"icon"`
+	Name   string         `json:"name"`
+	Icon   sql.NullString `json:"icon"`
+	UserID uuid.NullUUID  `json:"user_id"`
 }
 
 func (q *Queries) CreateClient(ctx context.Context, arg CreateClientParams) (Client, error) {
-	row := q.db.QueryRowContext(ctx, createClient, arg.Name, arg.Icon)
+	row := q.db.QueryRowContext(ctx, createClient, arg.Name, arg.Icon, arg.UserID)
 	var i Client
 	err := row.Scan(
 		&i.ID,
@@ -32,6 +33,7 @@ func (q *Queries) CreateClient(ctx context.Context, arg CreateClientParams) (Cli
 		&i.UpdatedAt,
 		&i.Name,
 		&i.Icon,
+		&i.UserID,
 	)
 	return i, err
 }
@@ -47,7 +49,7 @@ func (q *Queries) DeleteClient(ctx context.Context, id uuid.UUID) error {
 }
 
 const getClient = `-- name: GetClient :one
-SELECT id, created_at, updated_at, name, icon
+SELECT id, created_at, updated_at, name, icon, user_id
 FROM clients
 WHERE id = $1
 `
@@ -61,12 +63,13 @@ func (q *Queries) GetClient(ctx context.Context, id uuid.UUID) (Client, error) {
 		&i.UpdatedAt,
 		&i.Name,
 		&i.Icon,
+		&i.UserID,
 	)
 	return i, err
 }
 
 const listClients = `-- name: ListClients :many
-SELECT id, created_at, updated_at, name, icon
+SELECT id, created_at, updated_at, name, icon, user_id
 FROM clients
 ORDER BY name ASC
 `
@@ -86,6 +89,44 @@ func (q *Queries) ListClients(ctx context.Context) ([]Client, error) {
 			&i.UpdatedAt,
 			&i.Name,
 			&i.Icon,
+			&i.UserID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listClientsByUser = `-- name: ListClientsByUser :many
+SELECT id, created_at, updated_at, name, icon, user_id
+FROM clients
+WHERE user_id = $1
+ORDER BY name ASC
+`
+
+func (q *Queries) ListClientsByUser(ctx context.Context, userID uuid.NullUUID) ([]Client, error) {
+	rows, err := q.db.QueryContext(ctx, listClientsByUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Client
+	for rows.Next() {
+		var i Client
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.Icon,
+			&i.UserID,
 		); err != nil {
 			return nil, err
 		}
@@ -101,7 +142,7 @@ func (q *Queries) ListClients(ctx context.Context) ([]Client, error) {
 }
 
 const searchClients = `-- name: SearchClients :many
-SELECT id, created_at, updated_at, name, icon
+SELECT id, created_at, updated_at, name, icon, user_id
 FROM clients
 WHERE name ILIKE '%' || $1 || '%'
 ORDER BY name ASC
@@ -122,6 +163,7 @@ func (q *Queries) SearchClients(ctx context.Context, dollar_1 sql.NullString) ([
 			&i.UpdatedAt,
 			&i.Name,
 			&i.Icon,
+			&i.UserID,
 		); err != nil {
 			return nil, err
 		}
@@ -140,7 +182,7 @@ const updateClient = `-- name: UpdateClient :one
 UPDATE clients
 SET name = $2, icon = $3, updated_at = NOW()
 WHERE id = $1
-RETURNING id, created_at, updated_at, name, icon
+RETURNING id, created_at, updated_at, name, icon, user_id
 `
 
 type UpdateClientParams struct {
@@ -158,6 +200,7 @@ func (q *Queries) UpdateClient(ctx context.Context, arg UpdateClientParams) (Cli
 		&i.UpdatedAt,
 		&i.Name,
 		&i.Icon,
+		&i.UserID,
 	)
 	return i, err
 }

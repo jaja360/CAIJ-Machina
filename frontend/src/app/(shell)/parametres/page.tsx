@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TopBar } from "@/components/layout/TopBar";
 import { Btn } from "@/components/ui/Btn";
 import { DomainsTab } from "@/components/features/parametres/DomainsTab";
@@ -9,9 +9,11 @@ import { AlertConfigTab } from "@/components/features/parametres/AlertConfigTab"
 import { SourcesTab } from "@/components/features/parametres/SourcesTab";
 import { ClientsTab } from "@/components/features/parametres/ClientsTab";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 import { MOCK_DOMAINS, MOCK_KEYWORDS, MOCK_SOURCES } from "@/data/mockData";
-import type { WatchSource } from "@/types";
-import type { DomainConfig } from "@/types";
+import { fetchKeywords, saveKeywords } from "@/services/keywordsService";
+import { fetchClients } from "@/services/clientsService";
+import type { WatchSource, DomainConfig, Client } from "@/types";
 
 type TabId = "domains" | "keywords" | "freq" | "sources" | "clients";
 
@@ -22,13 +24,32 @@ interface NavSection {
 
 export default function ParametresPage() {
   const { t } = useLanguage();
+  const { token } = useAuth();
   const [activeTab, setActiveTab] = useState<TabId>("domains");
   const [domains, setDomains] = useState<DomainConfig[]>(MOCK_DOMAINS);
   const [keywords, setKeywords] = useState<string[]>(MOCK_KEYWORDS);
   const [sources, setSources] = useState(MOCK_SOURCES);
+  const [clients, setClients] = useState<Client[]>([]);
   const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const markDirty = () => setDirty(true);
+
+  // Load keywords and clients from backend when authenticated
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    (async () => {
+      const [kw, cl] = await Promise.all([
+        fetchKeywords(token),
+        fetchClients(token),
+      ]);
+      if (cancelled) return;
+      if (kw) setKeywords(kw);
+      if (cl) setClients(cl);
+    })();
+    return () => { cancelled = true; };
+  }, [token]);
 
   const navSections: NavSection[] = [
     {
@@ -109,7 +130,7 @@ export default function ParametresPage() {
             />
           )}
           {activeTab === "clients" && (
-            <ClientsTab />
+            <ClientsTab clients={clients} />
           )}
         </div>
       </div>
@@ -120,8 +141,17 @@ export default function ParametresPage() {
         </span>
         <div className="flex items-center gap-2">
           <Btn onClick={() => setDirty(false)}>{t("settings.footer.cancel")}</Btn>
-          <Btn variant="primary" onClick={() => setDirty(false)}>
-            {t("settings.footer.save")}
+          <Btn
+            variant="primary"
+            disabled={saving}
+            onClick={async () => {
+              setSaving(true);
+              if (token) await saveKeywords(token, keywords);
+              setSaving(false);
+              setDirty(false);
+            }}
+          >
+            {saving ? "…" : t("settings.footer.save")}
           </Btn>
         </div>
       </div>

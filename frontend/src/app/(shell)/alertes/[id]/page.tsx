@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { TopBar } from "@/components/layout/TopBar";
 import { Btn } from "@/components/ui/Btn";
@@ -8,15 +9,30 @@ import { SectionLabel } from "@/components/ui/SectionLabel";
 import { AlertBanner } from "@/components/features/alertes/AlertBanner";
 import { ModificationCard } from "@/components/features/alertes/ModificationCard";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 import { MOCK_ALERTS } from "@/data/mockData";
+import { fetchAlerts } from "@/services/alertsService";
+import type { AlertItem } from "@/types";
 
 export default function AlertDetailPage() {
   const { t } = useLanguage();
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
+  const { token } = useAuth();
+  const [items, setItems] = useState<AlertItem[]>(MOCK_ALERTS);
 
-  const alert = MOCK_ALERTS.find((a) => a.id === id) ?? MOCK_ALERTS[0];
-  const mods = alert.modifications ?? [];
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    (async () => {
+      const data = await fetchAlerts(token);
+      if (!cancelled && data) setItems(data);
+    })();
+    return () => { cancelled = true; };
+  }, [token]);
+
+  const alert = items.find((a) => a.id === id) ?? items[0] ?? MOCK_ALERTS[0];
+  const mods = alert?.modifications ?? [];
 
   return (
     <>

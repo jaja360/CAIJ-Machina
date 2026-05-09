@@ -6,15 +6,17 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/jaja360/CAIJ-Machina/internal/database"
 )
 
 func (c *apiConfig) getClients(w http.ResponseWriter, r *http.Request) {
-	if _, err := c.requireUser(r); err != nil {
+	userID, err := c.requireUser(r)
+	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Missing or invalid token")
 		return
 	}
-	clients, err := c.db.ListClients(r.Context())
+	clients, err := c.db.ListClientsByUser(r.Context(), uuid.NullUUID{UUID: userID, Valid: true})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -23,7 +25,8 @@ func (c *apiConfig) getClients(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *apiConfig) addClients(w http.ResponseWriter, r *http.Request) {
-	if _, err := c.requireUser(r); err != nil {
+	userID, err := c.requireUser(r)
+	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Missing or invalid token")
 		return
 	}
@@ -37,8 +40,9 @@ func (c *apiConfig) addClients(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	client, err := c.db.CreateClient(r.Context(), database.CreateClientParams{
-		Name: strings.TrimSpace(in.Name),
-		Icon: nullString(in.Icon),
+		Name:   strings.TrimSpace(in.Name),
+		Icon:   nullString(in.Icon),
+		UserID: uuid.NullUUID{UUID: userID, Valid: true},
 	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())

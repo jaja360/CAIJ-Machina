@@ -85,7 +85,7 @@ func (q *Queries) ListClientKeywords(ctx context.Context, clientID uuid.UUID) ([
 }
 
 const listClientsByKeyword = `-- name: ListClientsByKeyword :many
-SELECT clients.id, clients.created_at, clients.updated_at, clients.name, clients.icon
+SELECT clients.id, clients.created_at, clients.updated_at, clients.name, clients.icon, clients.user_id
 FROM client_metadatas
 JOIN clients ON clients.id = client_metadatas.client_id
 WHERE client_metadatas.keyword = $1
@@ -107,6 +107,7 @@ func (q *Queries) ListClientsByKeyword(ctx context.Context, keyword uuid.UUID) (
 			&i.UpdatedAt,
 			&i.Name,
 			&i.Icon,
+			&i.UserID,
 		); err != nil {
 			return nil, err
 		}

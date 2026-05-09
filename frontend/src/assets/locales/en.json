@@ -169,6 +169,7 @@
       "description": "Imported contracts are automatically analysed with each new alert.",
       "header": "Active clients",
       "count": "{{count}} contracts",
+      "empty": "No clients configured yet.",
       "manage": "Manage",
       "add": "+ Add",
       "import": "Import contracts (.pdf, .docx) — automatically analysed"

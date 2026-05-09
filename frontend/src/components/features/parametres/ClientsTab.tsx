@@ -1,8 +1,13 @@
 import { Icon } from "@/components/ui/Icon";
 import { useLanguage } from "@/context/LanguageContext";
 import { MOCK_CLIENTS } from "@/data/mockData";
+import type { Client } from "@/types";
 
-export function ClientsTab() {
+interface ClientsTabProps {
+  clients?: Client[];
+}
+
+export function ClientsTab({ clients = MOCK_CLIENTS }: ClientsTabProps) {
   const { t } = useLanguage();
 
   return (
@@ -20,8 +25,13 @@ export function ClientsTab() {
             {t("settings.clients.add")}
           </button>
         </div>
-        {MOCK_CLIENTS.map((cl, i) => (
-          <div key={cl.code} className={`flex items-center gap-3 px-4 py-2.5 ${i < MOCK_CLIENTS.length - 1 ? "border-b border-ink-100" : ""}`}>
+        {clients.length === 0 && (
+          <div className="px-4 py-4 text-[11.5px] text-ink-500 text-center">
+            {t("settings.clients.empty")}
+          </div>
+        )}
+        {clients.map((cl, i) => (
+          <div key={cl.id ?? cl.code} className={`flex items-center gap-3 px-4 py-2.5 ${i < clients.length - 1 ? "border-b border-ink-100" : ""}`}>
             <div className={`w-7 h-7 rounded-full grid place-items-center text-[10px] font-bold shrink-0 ${cl.color}`}>
               {cl.code}
             </div>
@@ -37,10 +47,12 @@ export function ClientsTab() {
             </button>
           </div>
         ))}
-        <div className="flex items-center gap-2 px-4 py-2.5 text-[11.5px] text-ink-500 hover:bg-ink-50 cursor-pointer border-t border-ink-100">
-          <Icon name="upload" className="w-3.5 h-3.5" />
-          {t("settings.clients.import")}
-        </div>
+        {clients.length > 0 && (
+          <div className="flex items-center gap-2 px-4 py-2.5 text-[11.5px] text-ink-500 hover:bg-ink-50 cursor-pointer border-t border-ink-100">
+            <Icon name="upload" className="w-3.5 h-3.5" />
+            {t("settings.clients.import")}
+          </div>
+        )}
       </div>
     </section>
   );

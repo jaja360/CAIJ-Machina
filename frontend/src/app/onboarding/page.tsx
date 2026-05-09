@@ -8,13 +8,14 @@ import { Icon } from "@/components/ui/Icon";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { MOCK_DOMAINS, MOCK_KEYWORDS, MOCK_SOURCES } from "@/data/mockData";
+import { saveKeywords } from "@/services/keywordsService";
 import type { DomainConfig, WatchSource } from "@/types";
 
 const TOTAL_STEPS = 4;
 
 export default function OnboardingPage() {
   const { t } = useLanguage();
-  const { login, register } = useAuth();
+  const { login, register, token } = useAuth();
   const router = useRouter();
 
   const [step, setStep] = useState(1);
@@ -75,7 +76,7 @@ export default function OnboardingPage() {
 
   const toggleChannel = (idx: number) => {
     const next = new Set(channels);
-    next.has(idx) ? next.delete(idx) : next.add(idx);
+    if (next.has(idx)) { next.delete(idx); } else { next.add(idx); }
     setChannels(next);
   };
 
@@ -349,7 +350,11 @@ export default function OnboardingPage() {
                 <Icon name="arrowRight" className="w-3.5 h-3.5" />
               </Btn>
             ) : (
-              <Btn variant="primary" onClick={() => router.push("/dashboard")}>
+              <Btn variant="primary" onClick={async () => {
+                // Persist keywords best-effort before leaving onboarding.
+                if (token) await saveKeywords(token, keywords);
+                router.push("/dashboard");
+              }}>
                 {t("onboarding.finish")}
                 <Icon name="check" className="w-3.5 h-3.5" />
               </Btn>

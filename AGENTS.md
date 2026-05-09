@@ -1,23 +1,23 @@
 # AGENTS.md
 
-## Projet
+## Carte du dépôt
 
-- Prototype de hackathon BCF : veille juridique/réglementaire « juste à temps », à terme propulsée par IA/LLM; la description officielle est dans `Description_Défi_BCF.md`.
-- Le backend Go existe dans `Code/`; aucun frontend React/JavaScript n’est encore configuré dans le dépôt.
-- Les ressources OpenJustice fournies sont sous `Ressources Techniques - Technical Resources/OpenJustice/`; les scripts TypeScript y sont des exemples externes, pas une app frontend du repo.
+- Prototype BCF de veille juridique/réglementaire « juste à temps »; le défi est décrit dans `Description_Défi_BCF.md`.
+- Backend Go dans `Code/`; frontend Next.js dans `frontend/`. Il n’y a pas de workspace/task runner racine, Makefile, Dockerfile ou CI GitHub.
+- Les PDF et exemples sous `Ressources Techniques - Technical Resources/` sont des ressources externes; `documents/` et `Code/contracts/` servent aussi de fixtures aux tests de chunking.
 
 ## Backend Go (`Code/`)
 
-- Module Go : `github.com/jaja360/CAIJ-Machina`, version `go 1.26.3` dans `Code/go.mod`.
-- Point d’entrée réel : `Code/main.go`; serveur HTTP sur `:8080` avec `http.NewServeMux`.
-- Style Go : utiliser `any` plutôt que `interface{}` dans le nouveau code.
-- Toujours lancer les commandes applicatives depuis `Code/` : `godotenv.Load()` n’a pas de chemin explicite et charge donc `.env` depuis le répertoire courant.
-- Variables attendues : `DB_URL`, `JWT_SECRET`, `AZURE_RESOURCE_NAME`, `AZURE_API_KEY`, `AZURE_API_VERSION`, `AZURE_EMBEDDING_MODEL`, `PLATFORM`; utiliser `Code/.env.example` comme modèle et ne jamais copier de secret depuis `Code/.env`.
-- `apiConfig.openaiClient` est configuré avec `openai-go/v3/azure` depuis `AZURE_RESOURCE_NAME`, `AZURE_API_KEY` et `AZURE_API_VERSION`; ne pas revenir à `OPENAI_API_KEY` sans demande explicite.
-- `PLATFORM=dev` active `POST /admin/reset`, qui vide la table `users`; hors `dev`, cette route répond `403`.
-- `/app/` sert `http.FileServer(http.Dir("."))` depuis le répertoire courant; éviter d’y placer des fichiers sensibles servis par accident.
+- Module `github.com/jaja360/CAIJ-Machina`, `go 1.26.3`; point d’entrée réel `Code/main.go`, serveur HTTP `:8080` avec `http.NewServeMux`.
+- Lance les commandes applicatives depuis `Code/`: `godotenv.Load()` charge `.env` depuis le cwd, et `/app/` sert `http.FileServer(http.Dir("."))` depuis le cwd.
+- Variables attendues: `DB_URL`, `JWT_SECRET`, `AZURE_RESOURCE_NAME`, `AZURE_API_KEY`, `AZURE_API_VERSION`, `AZURE_EMBEDDING_MODEL`, `PLATFORM`; utiliser `Code/.env.example`, ne pas lire/copier `Code/.env`.
+- OpenAI est configuré pour Azure via `openai-go/v3/azure` (`AZURE_RESOURCE_NAME`, `AZURE_API_KEY`, `AZURE_API_VERSION`); ne pas basculer vers `OPENAI_API_KEY` sans demande explicite.
+- Style Go local: utiliser `any` plutôt que `interface{}` dans le nouveau code.
+- Auth: mots de passe Argon2id; JWT HS256 issuer `CAIJ-Machina-access`; les routes protégées utilisent `Authorization: Bearer <jwt>`, tandis que `/api/refresh` et `/api/revoke` attendent le refresh token en Bearer.
+- Routes câblées dans `main.go`: auth/users/me, `GET|POST /api/clients`, KPI, documents, laws/law changes, alerts, `GET|PUT /api/keywords`, agent conversations, healthz, et `POST /admin/reset`.
+- `PLATFORM=dev` active `POST /admin/reset` (suppression des `users`); hors dev la route répond `403`.
 
-## Commandes vérifiées
+### Commandes backend vérifiées
 
 ```bash
 cd Code
@@ -25,40 +25,46 @@ go mod download
 go run .
 go test ./...
 go test ./internal/auth -run TestValidateJWT
+go test . -run TestHealthz
 ```
 
-- Santé backend : `curl http://localhost:8080/api/healthz` doit répondre `OK` quand le serveur tourne.
-- Il n’y a pas de Makefile, CI, Dockerfile, config lint ou formatter repo-local; ne pas inventer de commandes npm tant qu’un frontend n’a pas été ajouté.
+- Santé: avec le serveur lancé, `curl http://localhost:8080/api/healthz` doit répondre `OK`.
+- Les tests de chunking lisent `../documents/*.html` et `Code/contracts/*.html`; exécuter les tests depuis `Code/`.
 
-## Base de données et migrations
+## PostgreSQL, migrations et SQL généré
 
-- Base attendue : PostgreSQL; `main.go` ouvre `os.Getenv("DB_URL")` avec le driver `github.com/lib/pq`.
-- Les migrations Goose sont dans `Code/sql/schema/` et utilisent `gen_random_uuid()`; activer `pgcrypto` localement si nécessaire.
-- Appliquer les migrations depuis `Code/` après avoir exporté une chaîne de connexion valide :
+- Base attendue: PostgreSQL via `github.com/lib/pq` et `DB_URL`; les migrations Goose sont dans `Code/sql/schema/` et utilisent `gen_random_uuid()` (activer `pgcrypto` localement si nécessaire).
+- Appliquer les migrations depuis `Code/` après avoir exporté une chaîne valide:
 
 ```bash
 goose -dir sql/schema postgres "$DB_URL" up
 ```
 
-## SQL généré
+- `scripts/db_bootstrap.sql` est un helper local qui crée un rôle/base `pdrago`; ne pas l’exécuter tel quel si l’utilisateur PostgreSQL local diffère.
+- `Code/internal/database/` est généré par sqlc; modifier `Code/sql/schema/` ou `Code/sql/queries/`, puis régénérer depuis `Code/` avec `sqlc generate`.
+- `Code/sqlc.yaml` force les tags JSON et masque `users.hashed_password` avec `json:"-"`.
 
-- `Code/internal/database/` est généré par sqlc; ne pas modifier ces fichiers à la main.
-- Source sqlc : `Code/sqlc.yaml`, schémas `Code/sql/schema/`, requêtes `Code/sql/queries/`.
-- Après modification du SQL, régénérer depuis `Code/` :
+## Frontend Next.js (`frontend/`)
+
+- Next `16.2.6`, React `19.2.4`, TypeScript strict; routes App Router sous `frontend/src/app`, alias `@/*` vers `frontend/src/*`.
+- `frontend/AGENTS.md` avertit que Next 16 a des changements cassants: lire le guide pertinent dans `frontend/node_modules/next/dist/docs/` avant de modifier du code Next.
+- Tailwind v4 est configuré via `@tailwindcss/postcss` et les tokens `@theme` dans `src/app/globals.css`; il n’y a pas de `tailwind.config.*`.
+- Client HTTP frontend: `src/lib/api.ts` utilise `NEXT_PUBLIC_API_URL` (défaut `http://localhost:8080`) et porte l’auth/refresh; les services sous `src/services/` appellent ce client et mappent les modèles Go vers l’UI.
+- Pas de routes mock sous `src/app/api/`; tout passe par le backend Go via `src/lib/api.ts` sauf décision explicite de proxy/mock.
+
+### Commandes frontend
 
 ```bash
-sqlc generate
+cd frontend
+npm ci
+npm run dev
+npm run lint
+npm run build
 ```
 
-- `sqlc.yaml` force les tags JSON et masque `users.hashed_password` avec `json:"-"`.
-
-## API backend actuelle
-
-- Routes câblées : `GET /api/healthz`, `POST /api/users`, `POST /api/login`, `PUT /api/users`, `POST /api/refresh`, `POST /api/revoke`, `POST /admin/reset`.
-- Auth : mots de passe Argon2id, JWT HS256 avec issuer `CAIJ-Machina-access`, refresh tokens hex stockés en base.
-- `PUT /api/users` attend un Bearer JWT; `/api/refresh` et `/api/revoke` attendent le refresh token en Bearer.
+- Aucun script de test frontend n’est configuré. `npm run lint` est configuré mais peut échouer sur des violations React hooks existantes; rerun avant d’annoncer un état vert.
 
 ## Fichiers à traiter avec prudence
 
-- `Code/.env` est ignoré par git et peut contenir des secrets locaux; ne pas le lire, le committer ou l’utiliser comme source de documentation.
-- `Code/CAIJ-Machina` est un binaire ignoré par git; ne pas le modifier sauf si le workflow de build le nécessite explicitement.
+- Secrets ignorés: `Code/.env` et `frontend/.env*`; ne pas les lire, copier ni committer.
+- Artefacts ignorés: `Code/CAIJ-Machina`, `frontend/node_modules/`, `frontend/.next/`, `frontend/out/`, `frontend/build/`.

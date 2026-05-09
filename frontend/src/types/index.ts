@@ -100,6 +100,7 @@ export interface WatchSource {
 }
 
 export interface Client {
+  id?: string;
   code: string;
   name: string;
   detail: string;

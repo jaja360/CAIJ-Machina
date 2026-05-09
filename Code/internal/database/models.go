@@ -50,6 +50,7 @@ type Client struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	Name      string         `json:"name"`
 	Icon      sql.NullString `json:"icon"`
+	UserID    uuid.NullUUID  `json:"user_id"`
 }
 
 type ClientMetadata struct {

@@ -1,6 +1,6 @@
 -- name: CreateClient :one
-INSERT INTO clients (name, icon)
-VALUES ($1, $2)
+INSERT INTO clients (name, icon, user_id)
+VALUES ($1, $2, $3)
 RETURNING *;
 
 -- name: GetClient :one
@@ -11,6 +11,12 @@ WHERE id = $1;
 -- name: ListClients :many
 SELECT *
 FROM clients
+ORDER BY name ASC;
+
+-- name: ListClientsByUser :many
+SELECT *
+FROM clients
+WHERE user_id = $1
 ORDER BY name ASC;
 
 -- name: SearchClients :many

@@ -9,11 +9,12 @@ import (
 )
 
 func (c *apiConfig) getKeywords(w http.ResponseWriter, r *http.Request) {
-	if _, err := c.requireUser(r); err != nil {
+	userID, err := c.requireUser(r)
+	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Missing or invalid token")
 		return
 	}
-	keywords, err := c.db.ListKeywords(r.Context())
+	keywords, err := c.db.ListUserKeywords(r.Context(), userID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -36,6 +37,20 @@ func (c *apiConfig) replaceKeywords(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	queries := c.db
+	commit := func() error { return nil }
+	rollback := func() {}
+	if c.sqlDB != nil {
+		tx, err := c.sqlDB.BeginTx(r.Context(), nil)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Error updating keywords")
+			return
+		}
+		queries = database.New(tx)
+		commit = tx.Commit
+		rollback = func() { _ = tx.Rollback() }
+	}
+
 	seen := map[string]struct{}{}
 	created := make([]database.Keyword, 0, len(in.Keywords))
 	for _, name := range in.Keywords {
@@ -47,24 +62,31 @@ func (c *apiConfig) replaceKeywords(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		seen[name] = struct{}{}
-		keyword, err := c.db.UpsertKeywordByName(r.Context(), name)
+		keyword, err := queries.UpsertKeywordByName(r.Context(), name)
 		if err != nil {
+			rollback()
 			respondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 		created = append(created, keyword)
 	}
 
-	if err := c.db.RemoveAllUserKeywords(r.Context(), userID); err != nil {
+	if err := queries.RemoveAllUserKeywords(r.Context(), userID); err != nil {
+		rollback()
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	for _, keyword := range created {
-		_, err := c.db.AddUserKeyword(r.Context(), database.AddUserKeywordParams{UserID: userID, Keyword: keyword.ID})
+		_, err := queries.AddUserKeyword(r.Context(), database.AddUserKeywordParams{UserID: userID, Keyword: keyword.ID})
 		if err != nil {
+			rollback()
 			respondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
+	}
+	if err := commit(); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Error updating keywords")
+		return
 	}
 	respondWithJSON(w, http.StatusOK, created)
 }
