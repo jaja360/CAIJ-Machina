@@ -10,6 +10,7 @@
 
 - Module Go : `github.com/jaja360/CAIJ-Machina`, version `go 1.26.3` dans `Code/go.mod`.
 - Point d’entrée réel : `Code/main.go`; serveur HTTP sur `:8080` avec `http.NewServeMux`.
+- Style Go : utiliser `any` plutôt que `interface{}` dans le nouveau code.
 - Toujours lancer les commandes applicatives depuis `Code/` : `godotenv.Load()` n’a pas de chemin explicite et charge donc `.env` depuis le répertoire courant.
 - Variables attendues : `DB_URL`, `JWT_SECRET`, `PLATFORM`; utiliser `Code/.env.example` comme modèle et ne jamais copier de secret depuis `Code/.env`.
 - `PLATFORM=dev` active `POST /admin/reset`, qui vide la table `users`; hors `dev`, cette route répond `403`.

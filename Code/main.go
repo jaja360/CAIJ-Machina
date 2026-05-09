@@ -54,5 +54,6 @@ func main() {
 		Addr:    ":8080",
 		Handler: middlewareLog(mux),
 	}
+	fmt.Println("Server is running on port 8080")
 	server.ListenAndServe()
 }
