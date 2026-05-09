@@ -676,7 +676,7 @@ func (cfg *apiConfig) classifyChunkDomains(ctx context.Context, recordText, sect
 	response, err := cfg.openaiClient.Responses.New(ctx, responses.ResponseNewParams{
 		Instructions: openai.String(chunkDomainPrompt),
 		Input: responses.ResponseNewParamsInputUnion{OfString: openai.String(fmt.Sprintf(
-			"Allowed keywords:\n%s\n\nCurrent record text:\n%s\n\nOther text from the same section:\n%s",
+			"Return strict JSON only. Allowed keywords:\n%s\n\nCurrent record text:\n%s\n\nOther text from the same section:\n%s",
 			string(allowedKeywords),
 			recordText,
 			sectionText,

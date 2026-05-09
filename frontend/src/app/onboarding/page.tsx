@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Toggle } from "@/components/ui/Toggle";
 import { Btn } from "@/components/ui/Btn";
@@ -9,6 +9,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { MOCK_DOMAINS, MOCK_KEYWORDS, MOCK_SOURCES } from "@/data/mockData";
 import { saveKeywords } from "@/services/keywordsService";
+import { uploadLawFiles } from "@/services/lawsService";
 import type { DomainConfig, WatchSource } from "@/types";
 
 const TOTAL_STEPS = 4;
@@ -36,6 +37,21 @@ export default function OnboardingPage() {
   const [newKw, setNewKw] = useState("");
   const [sources, setSources] = useState<WatchSource[]>(MOCK_SOURCES);
   const [channels, setChannels] = useState<Set<number>>(new Set([0]));
+
+  // Step 4 — law file uploads
+  interface UploadFileEntry {
+    file: File;
+    status: "pending" | "uploading" | "success" | "error";
+    error?: string;
+  }
+  const [uploadFiles, setUploadFiles] = useState<UploadFileEntry[]>([]);
+  const [dragActive, setDragActive] = useState(false);
+  const [uploadRunning, setUploadRunning] = useState(false);
+  const [invalidFileCount, setInvalidFileCount] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragDepthRef = useRef(0);
+  const uploadFilesRef = useRef(uploadFiles);
+  useEffect(() => { uploadFilesRef.current = uploadFiles; }, [uploadFiles]);
 
   const stepMeta = [
     { name: t("onboarding.steps.1.name"), sub: t("onboarding.steps.1.sub") },
@@ -79,6 +95,111 @@ export default function OnboardingPage() {
     if (next.has(idx)) { next.delete(idx); } else { next.add(idx); }
     setChannels(next);
   };
+
+  // ── Step 4 — file upload helpers ──────────────────────────────────────────
+
+  const ACCEPTED_TYPES = [".html", ".htm"];
+
+  /** Add files to the list, filtering out non-HTML. */
+  const addFiles = useCallback((incoming: FileList | File[]) => {
+    const entries: UploadFileEntry[] = [];
+    let invalidCount = 0;
+    for (const f of Array.from(incoming)) {
+      const ext = f.name.split(".").pop()?.toLowerCase();
+      if (ext === "html" || ext === "htm" || f.type === "text/html") {
+        entries.push({ file: f, status: "pending" });
+      } else {
+        invalidCount += 1;
+      }
+    }
+    setInvalidFileCount(invalidCount);
+    if (entries.length) {
+      setUploadFiles((prev) => {
+        const existing = new Set(prev.map((e) => `${e.file.name}-${e.file.size}`));
+        return [...prev, ...entries.filter((e) => !existing.has(`${e.file.name}-${e.file.size}`))];
+      });
+    }
+  }, []);
+
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDragIn = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragDepthRef.current += 1;
+    setDragActive(true);
+  }, []);
+
+  const handleDragOut = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+    if (dragDepthRef.current === 0) setDragActive(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragDepthRef.current = 0;
+    setDragActive(false);
+    if (e.dataTransfer.files?.length) {
+      addFiles(e.dataTransfer.files);
+    }
+  }, [addFiles]);
+
+  const handleBrowse = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.length) {
+      addFiles(e.target.files);
+      // Reset so the same file can be re-selected
+      e.target.value = "";
+    }
+  }, [addFiles]);
+
+  const removeFile = useCallback((index: number) => {
+    setUploadFiles((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  /** Upload all pending files sequentially. */
+  const handleUploadAll = useCallback(async () => {
+    if (!token || uploadRunning) return;
+    const files = uploadFilesRef.current;
+    const pending = files.filter((f) => f.status === "pending");
+    if (!pending.length) return;
+
+    setUploadRunning(true);
+
+    // Mark all pending as uploading
+    setUploadFiles((prev) =>
+      prev.map((e) => (e.status === "pending" ? { ...e, status: "uploading" as const } : e)),
+    );
+
+    await uploadLawFiles(
+      token,
+      pending.map((e) => e.file),
+      (filename, status, error) => {
+        setUploadFiles((prev) => {
+          // Match by name (find first uploading/pending entry)
+          const idx = prev.findIndex(
+            (e) =>
+              e.file.name === filename &&
+              (e.status === "uploading" || e.status === "pending"),
+          );
+          if (idx === -1) return prev;
+          const next = [...prev];
+          next[idx] = { ...next[idx], status: status as UploadFileEntry["status"], error };
+          return next;
+        });
+      },
+    );
+    setUploadRunning(false);
+  }, [token, uploadRunning]);
 
   return (
     <div className="min-h-screen bg-ink-50 flex flex-col items-center justify-center p-6">
@@ -290,20 +411,123 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ── Step 4: Clients & alerts ── */}
+          {/* ── Step 4: Law upload & alerts ── */}
           {step === 4 && (
             <div className="flex flex-col gap-6">
-              <div className="border-2 border-dashed border-ink-200 rounded-xl px-6 py-8 flex flex-col items-center gap-3 text-center">
-                <div className="w-10 h-10 rounded-full bg-ink-100 grid place-items-center text-ink-500">
-                  <Icon name="upload" className="w-5 h-5" />
+              {!token ? (
+                /* No token — prompt to sign in first */
+                <div className="rounded-xl bg-amber-50 ring-1 ring-amber-200 px-4 py-3 text-[12px] text-amber-800">
+                  {t("onboarding.upload.noToken")}
                 </div>
-                <div>
-                  <div className="text-[13px] font-semibold text-ink-900">{t("onboarding.upload.title")}</div>
-                  <div className="text-[11px] text-ink-500 mt-0.5">{t("onboarding.upload.subtitle")}</div>
-                </div>
-                <Btn>{t("onboarding.upload.browse")}</Btn>
-              </div>
+              ) : (
+                <>
+                  {/* Dropzone */}
+                  <div
+                    onDragEnter={handleDragIn}
+                    onDragLeave={handleDragOut}
+                    onDragOver={handleDrag}
+                    onDrop={handleDrop}
+                    className={[
+                      "border-2 border-dashed rounded-xl px-6 py-8 flex flex-col items-center gap-3 text-center transition-colors",
+                      dragActive
+                        ? "border-brand-400 bg-brand-50/40"
+                        : "border-ink-200 hover:border-ink-300 hover:bg-ink-50/40",
+                    ].join(" ")}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-ink-100 grid place-items-center text-ink-500">
+                      <Icon name="upload" className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-[13px] font-semibold text-ink-900">
+                        {dragActive ? t("onboarding.upload.dropzoneActive") : t("onboarding.upload.dropzone")}
+                      </div>
+                      <div className="text-[11px] text-ink-500 mt-0.5">{t("onboarding.upload.subtitle")}</div>
+                    </div>
+                    <Btn type="button" onClick={handleBrowse}>{t("onboarding.upload.browse")}</Btn>
+                    <div className="text-[10px] text-ink-400">{t("onboarding.upload.htmlOnly")}</div>
+                  </div>
 
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept={ACCEPTED_TYPES.join(",")}
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+
+                  {invalidFileCount > 0 && (
+                    <div className="text-[11px] text-amber-700 bg-amber-50 ring-1 ring-amber-200 rounded-md px-3 py-2" role="status">
+                      {t("onboarding.upload.invalid", { count: invalidFileCount })}
+                    </div>
+                  )}
+
+                  {/* File list */}
+                  {uploadFiles.length > 0 && (
+                    <div aria-live="polite">
+                      <div className="text-[11px] font-semibold text-ink-600 mb-2 flex items-center justify-between">
+                        <span>{t("onboarding.upload.selected", { count: uploadFiles.length })}</span>
+                        {uploadFiles.some((f) => f.status === "pending") && (
+                          <Btn
+                            size="sm"
+                            variant="primary"
+                            onClick={handleUploadAll}
+                            disabled={uploadRunning}
+                          >
+                            {uploadRunning ? "…" : t("onboarding.upload.uploadAll")}
+                          </Btn>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto">
+                        {uploadFiles.map((entry, i) => (
+                          <div
+                            key={`${entry.file.name}-${entry.file.size}`}
+                            className="flex items-center gap-2 px-3 py-2 rounded-md bg-ink-50 ring-1 ring-ink-100"
+                          >
+                            <Icon name="fileText" className="w-3.5 h-3.5 shrink-0 text-ink-400" />
+                            <span className="flex-1 min-w-0 text-[12px] text-ink-800 truncate">
+                              {entry.file.name}
+                            </span>
+                            <span className="shrink-0 text-[10.5px] font-medium">
+                              {entry.status === "pending" && (
+                                <span className="text-ink-400">{t("onboarding.upload.status.pending")}</span>
+                              )}
+                              {entry.status === "uploading" && (
+                                <span className="text-brand-600 animate-pulse">{t("onboarding.upload.status.uploading")}</span>
+                              )}
+                              {entry.status === "success" && (
+                                <span className="text-green-600">{t("onboarding.upload.status.success")}</span>
+                              )}
+                              {entry.status === "error" && (
+                                <span className="text-red-600" title={entry.error}>
+                                  {t("onboarding.upload.status.error")}
+                                </span>
+                              )}
+                            </span>
+                            {entry.status === "pending" && (
+                              <button
+                                onClick={() => removeFile(i)}
+                                className="text-ink-400 hover:text-red-600 transition-colors"
+                                aria-label="Remove file"
+                              >
+                                <Icon name="close" className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      {uploadFiles.some((f) => f.status === "error") && (
+                        <div className="mt-2 text-[11px] text-red-600 bg-red-50 ring-1 ring-red-200 rounded-md px-3 py-2">
+                          {t("onboarding.upload.errorGeneric")}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Alert channels */}
               <div>
                 <div className="text-[11px] font-semibold text-ink-600 mb-2">{t("onboarding.alertsBy")}</div>
                 <div className="flex flex-wrap gap-2">

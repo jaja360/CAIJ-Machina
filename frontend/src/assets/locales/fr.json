@@ -215,9 +215,24 @@
     "keywordsLabel": "Mots-clés de surveillance",
     "keywordsAdd": "+ Ajouter un terme",
     "upload": {
-      "title": "Importez vos contrats existants",
-      "subtitle": "Formats acceptés : .pdf, .docx — analyse automatique par l'IA",
-      "browse": "Parcourir mes fichiers"
+      "title": "Importez vos lois existantes",
+      "subtitle": "Déposez vos fichiers HTML de lois pour les analyser automatiquement",
+      "browse": "Parcourir mes fichiers",
+      "dropzone": "Glissez-déposez vos fichiers HTML ici",
+      "dropzoneActive": "Déposez vos fichiers…",
+      "htmlOnly": "Seuls les fichiers .html et .htm sont acceptés",
+      "invalid": "{{count}} fichier(s) ignoré(s) : seuls les fichiers HTML sont acceptés.",
+      "fileList": "Fichiers sélectionnés",
+      "uploadAll": "Tout importer",
+      "selected": "{{count}} fichier(s) sélectionné(s)",
+      "status": {
+        "pending": "En attente",
+        "uploading": "Importation…",
+        "success": "Importé",
+        "error": "Erreur"
+      },
+      "noToken": "Veuillez d'abord vous connecter à l'étape 1 pour importer des fichiers.",
+      "errorGeneric": "Échec de l'importation"
     },
     "alertsBy": "Recevoir les alertes par",
     "channel": {

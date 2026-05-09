@@ -215,9 +215,24 @@
     "keywordsLabel": "Monitoring keywords",
     "keywordsAdd": "+ Add a term",
     "upload": {
-      "title": "Import your existing contracts",
-      "subtitle": "Accepted formats: .pdf, .docx — automatic AI analysis",
-      "browse": "Browse files"
+      "title": "Import your existing laws",
+      "subtitle": "Drop your HTML law files for automatic analysis",
+      "browse": "Browse files",
+      "dropzone": "Drag & drop your HTML files here",
+      "dropzoneActive": "Drop your files…",
+      "htmlOnly": "Only .html and .htm files are accepted",
+      "invalid": "{{count}} file(s) ignored: only HTML files are accepted.",
+      "fileList": "Selected files",
+      "uploadAll": "Upload all",
+      "selected": "{{count}} file(s) selected",
+      "status": {
+        "pending": "Pending",
+        "uploading": "Uploading…",
+        "success": "Imported",
+        "error": "Error"
+      },
+      "noToken": "Please sign in first (step 1) to upload files.",
+      "errorGeneric": "Import failed"
     },
     "alertsBy": "Receive alerts by",
     "channel": {

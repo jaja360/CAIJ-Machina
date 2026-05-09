@@ -61,7 +61,8 @@ export async function apiFetch<T = unknown>(
 
   const hdrs = new Headers(headers);
   if (token) hdrs.set("Authorization", `Bearer ${token}`);
-  if (!hdrs.has("Content-Type")) hdrs.set("Content-Type", "application/json");
+  if (!hdrs.has("Content-Type") && !(body instanceof FormData))
+    hdrs.set("Content-Type", "application/json");
 
   const res = await fetch(`${API_BASE_URL}${path}`, {
     ...rest,
@@ -221,4 +222,31 @@ export async function apiReplaceKeywords(
 
 export async function apiGetClients(token: string): Promise<BackendClient[]> {
   return apiFetch<BackendClient[]>("/api/clients", { token });
+}
+
+// ── Law upload ───────────────────────────────────────────────────────────────
+
+/** Response shape from PUT /api/laws. */
+export interface LawUploadResponse {
+  law: unknown;
+  sublaws_count: number;
+  law_changes_count: number;
+  alerts_count: number;
+}
+
+/**
+ * Upload a single HTML law file to PUT /api/laws using multipart/form-data.
+ * The caller **must not** set Content-Type — the browser handles the multipart boundary.
+ */
+export async function apiUploadLawFile(
+  token: string,
+  file: File,
+): Promise<LawUploadResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiFetch<LawUploadResponse>("/api/laws", {
+    method: "PUT",
+    token,
+    body: formData,
+  });
 }
