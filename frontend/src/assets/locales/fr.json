@@ -182,17 +182,34 @@
   "onboarding": {
     "skip": "Passer pour le moment",
     "title": "Configurez votre veille",
-    "subtitle": "Paramétrez vos domaines, mots-clés et sources en 3 étapes.",
+    "subtitle": "Créez votre compte et paramétrez votre veille en 4 étapes.",
     "stepLabel": "Étape {{current}} sur {{total}}",
     "steps": {
-      "1": { "name": "Domaines & mots-clés",  "sub": "Axes de veille juridique"   },
-      "2": { "name": "Sources de données",    "sub": "Flux officiels & RSS"        },
-      "3": { "name": "Clients & alertes",     "sub": "Dossiers et notifications"   }
+      "1": { "name": "Connexion",             "sub": "Votre compte LexVeille"      },
+      "2": { "name": "Domaines & mots-clés",  "sub": "Axes de veille juridique"   },
+      "3": { "name": "Sources de données",    "sub": "Flux officiels & RSS"        },
+      "4": { "name": "Clients & alertes",     "sub": "Dossiers et notifications"   }
     },
     "titles": {
-      "1": "Choisissez vos domaines de veille",
-      "2": "Sélectionnez vos sources de données",
-      "3": "Importez vos clients et configurez les alertes"
+      "1": "Connexion à LexVeille",
+      "2": "Choisissez vos domaines de veille",
+      "3": "Sélectionnez vos sources de données",
+      "4": "Importez vos clients et configurez les alertes"
+    },
+    "auth": {
+      "signIn": "Connexion",
+      "signUp": "Créer un compte",
+      "email": "Adresse courriel",
+      "password": "Mot de passe",
+      "firstName": "Prénom",
+      "lastName": "Nom de famille",
+      "jobTitle": "Titre professionnel",
+      "jobTitlePlaceholder": "Ex. : Avocat(e), Juriste…",
+      "signInBtn": "Se connecter",
+      "signUpBtn": "Créer mon compte",
+      "switchToSignUp": "Pas encore de compte ? Créer un compte",
+      "switchToSignIn": "Déjà un compte ? Se connecter",
+      "error": "Courriel ou mot de passe incorrect."
     },
     "keywordsLabel": "Mots-clés de surveillance",
     "keywordsAdd": "+ Ajouter un terme",

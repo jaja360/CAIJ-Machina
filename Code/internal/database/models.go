@@ -147,6 +147,8 @@ type User struct {
 	Email          string    `json:"email"`
 	HashedPassword string    `json:"-"`
 	JobTitle       string    `json:"job_title"`
+	FirstName      string    `json:"first_name"`
+	LastName       string    `json:"last_name"`
 }
 
 type UserMetadata struct {

@@ -10,12 +10,18 @@ import { KpiStrip } from "@/components/features/dashboard/KpiStrip";
 import type { KpiFilter } from "@/components/features/dashboard/KpiStrip";
 import { AlertCard } from "@/components/features/dashboard/AlertCard";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth, userDisplay } from "@/context/AuthContext";
 import { MOCK_ALERTS, MOCK_USER } from "@/data/mockData";
 
 function UserMenu() {
   const { language, setLanguage, t } = useLanguage();
+  const { user, isAuthenticated, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  const display = isAuthenticated && user
+    ? userDisplay(user, MOCK_USER.role)
+    : { name: MOCK_USER.name, initials: MOCK_USER.initials, role: MOCK_USER.role };
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -26,40 +32,61 @@ function UserMenu() {
   }, []);
 
   return (
-    <div className="relative" ref={ref}>
-      <button onClick={() => setOpen((v) => !v)}>
-        <Avatar initials={MOCK_USER.initials} />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-full mt-1.5 w-36 bg-white rounded-lg shadow-pop ring-1 ring-ink-100 py-1 z-50 animate-fade-in">
-          <div className="px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-widest text-ink-400">
-            {t("nav.settings")}
+    <div className="flex items-center gap-3">
+      <div className="text-right">
+        <div className="text-[12px] font-semibold text-ink-900">{display.name}</div>
+        <div className="text-[10.5px] text-ink-500">{display.role}</div>
+      </div>
+      <div className="relative" ref={ref}>
+        <button onClick={() => setOpen((v) => !v)}>
+          <Avatar initials={display.initials} />
+        </button>
+        {open && (
+          <div className="absolute right-0 top-full mt-1.5 w-40 bg-white rounded-lg shadow-pop ring-1 ring-ink-100 py-1 z-50 animate-fade-in">
+            <div className="px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-widest text-ink-400">
+              Langue / Language
+            </div>
+            <div className="flex gap-1 px-2 pb-2">
+              {(["fr", "en"] as const).map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => { setLanguage(lang); setOpen(false); }}
+                  className={`flex-1 py-1 rounded text-[12px] font-semibold transition-colors ${
+                    language === lang ? "bg-brand-700 text-white" : "text-ink-600 hover:bg-ink-100"
+                  }`}
+                >
+                  {lang.toUpperCase()}
+                </button>
+              ))}
+            </div>
+            {isAuthenticated && (
+              <>
+                <div className="h-px bg-ink-100 mx-2 mb-1" />
+                <button
+                  onClick={() => { logout(); setOpen(false); }}
+                  className="w-full text-left px-3 py-1.5 text-[12px] text-red-600 hover:bg-red-50 flex items-center gap-2"
+                >
+                  <Icon name="arrowLeft" className="w-3 h-3" />
+                  {t("nav.settings") === "Paramètres" ? "Déconnexion" : "Sign out"}
+                </button>
+              </>
+            )}
           </div>
-          <div className="flex gap-1 px-2 pb-2">
-            {(["fr", "en"] as const).map((lang) => (
-              <button
-                key={lang}
-                onClick={() => { setLanguage(lang); setOpen(false); }}
-                className={`flex-1 py-1 rounded text-[12px] font-semibold transition-colors ${
-                  language === lang
-                    ? "bg-brand-700 text-white"
-                    : "text-ink-600 hover:bg-ink-100"
-                }`}
-              >
-                {lang.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
 
 export default function DashboardPage() {
   const { t } = useLanguage();
+  const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const [filter, setFilter] = useState<KpiFilter>("all");
+
+  const display = isAuthenticated && user
+    ? userDisplay(user, MOCK_USER.role)
+    : { name: MOCK_USER.name, initials: MOCK_USER.initials, role: MOCK_USER.role };
 
   const critical = MOCK_ALERTS.filter((a) => a.severity === "critical");
   const high     = MOCK_ALERTS.filter((a) => a.severity === "high");
@@ -70,17 +97,13 @@ export default function DashboardPage() {
   return (
     <>
       <TopBar
-        title={t("dashboard.greeting", { name: MOCK_USER.name })}
+        title={t("dashboard.greeting", { name: display.name })}
         subtitle={t("dashboard.subtitle", { count: MOCK_ALERTS.length })}
         right={
           <div className="flex items-center gap-3">
             <button className="text-ink-400 hover:text-ink-700">
               <Icon name="search" className="w-4 h-4" />
             </button>
-            <div className="text-right">
-              <div className="text-[12px] font-semibold text-ink-900">{MOCK_USER.name}</div>
-              <div className="text-[10.5px] text-ink-500">{MOCK_USER.role}</div>
-            </div>
             <UserMenu />
           </div>
         }

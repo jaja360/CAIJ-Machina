@@ -9,9 +9,11 @@ import (
 )
 
 type userInput struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	JobTitle string `json:"job_title"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+	JobTitle  string `json:"job_title"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
 }
 
 func (c *apiConfig) putUsers(w http.ResponseWriter, r *http.Request) {
@@ -41,6 +43,8 @@ func (c *apiConfig) putUsers(w http.ResponseWriter, r *http.Request) {
 		Email:          p.Email,
 		HashedPassword: hashedPwd,
 		JobTitle:       normalizeUserJobTitle(p.JobTitle),
+		FirstName:      p.FirstName,
+		LastName:       p.LastName,
 	}); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {
@@ -64,6 +68,8 @@ func (c *apiConfig) postUsers(w http.ResponseWriter, r *http.Request) {
 		Email:          p.Email,
 		HashedPassword: hashedPwd,
 		JobTitle:       normalizeUserJobTitle(p.JobTitle),
+		FirstName:      p.FirstName,
+		LastName:       p.LastName,
 	}); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	} else {

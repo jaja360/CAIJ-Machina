@@ -182,17 +182,34 @@
   "onboarding": {
     "skip": "Skip for now",
     "title": "Set up your monitoring",
-    "subtitle": "Configure your domains, keywords and sources in 3 steps.",
+    "subtitle": "Create your account and configure monitoring in 4 steps.",
     "stepLabel": "Step {{current}} of {{total}}",
     "steps": {
-      "1": { "name": "Domains & keywords", "sub": "Legal monitoring axes"    },
-      "2": { "name": "Data sources",       "sub": "Official feeds & RSS"     },
-      "3": { "name": "Clients & alerts",   "sub": "Files and notifications"  }
+      "1": { "name": "Sign in",            "sub": "Your LexVeille account"     },
+      "2": { "name": "Domains & keywords", "sub": "Legal monitoring axes"      },
+      "3": { "name": "Data sources",       "sub": "Official feeds & RSS"       },
+      "4": { "name": "Clients & alerts",   "sub": "Files and notifications"    }
     },
     "titles": {
-      "1": "Choose your monitoring domains",
-      "2": "Select your data sources",
-      "3": "Import your clients and configure alerts"
+      "1": "Sign in to LexVeille",
+      "2": "Choose your monitoring domains",
+      "3": "Select your data sources",
+      "4": "Import your clients and configure alerts"
+    },
+    "auth": {
+      "signIn": "Sign in",
+      "signUp": "Create account",
+      "email": "Email address",
+      "password": "Password",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "jobTitle": "Professional title",
+      "jobTitlePlaceholder": "e.g. Lawyer, Jurist…",
+      "signInBtn": "Sign in",
+      "signUpBtn": "Create my account",
+      "switchToSignUp": "No account yet? Create one",
+      "switchToSignIn": "Already have an account? Sign in",
+      "error": "Incorrect email or password."
     },
     "keywordsLabel": "Monitoring keywords",
     "keywordsAdd": "+ Add a term",

@@ -13,14 +13,17 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (email, hashed_password, job_title) VALUES ( $1, $2, $3 )
-RETURNING id, created_at, updated_at, email, job_title
+INSERT INTO users (email, hashed_password, job_title, first_name, last_name)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, created_at, updated_at, email, job_title, first_name, last_name
 `
 
 type CreateUserParams struct {
 	Email          string `json:"email"`
 	HashedPassword string `json:"-"`
 	JobTitle       string `json:"job_title"`
+	FirstName      string `json:"first_name"`
+	LastName       string `json:"last_name"`
 }
 
 type CreateUserRow struct {
@@ -29,10 +32,18 @@ type CreateUserRow struct {
 	UpdatedAt time.Time `json:"updated_at"`
 	Email     string    `json:"email"`
 	JobTitle  string    `json:"job_title"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.Email, arg.HashedPassword, arg.JobTitle)
+	row := q.db.QueryRowContext(ctx, createUser,
+		arg.Email,
+		arg.HashedPassword,
+		arg.JobTitle,
+		arg.FirstName,
+		arg.LastName,
+	)
 	var i CreateUserRow
 	err := row.Scan(
 		&i.ID,
@@ -40,6 +51,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 		&i.UpdatedAt,
 		&i.Email,
 		&i.JobTitle,
+		&i.FirstName,
+		&i.LastName,
 	)
 	return i, err
 }
@@ -55,7 +68,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, created_at, updated_at, email, hashed_password, job_title
+SELECT id, created_at, updated_at, email, hashed_password, job_title, first_name, last_name
 FROM users
 WHERE email = $1
 `
@@ -70,12 +83,14 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Email,
 		&i.HashedPassword,
 		&i.JobTitle,
+		&i.FirstName,
+		&i.LastName,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, created_at, updated_at, email, hashed_password, job_title
+SELECT id, created_at, updated_at, email, hashed_password, job_title, first_name, last_name
 FROM users
 WHERE id = $1
 `
@@ -90,6 +105,8 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.Email,
 		&i.HashedPassword,
 		&i.JobTitle,
+		&i.FirstName,
+		&i.LastName,
 	)
 	return i, err
 }
@@ -105,9 +122,9 @@ func (q *Queries) ResetUserTable(ctx context.Context) error {
 
 const updateUserInfo = `-- name: UpdateUserInfo :one
 UPDATE users
-SET email = $2, hashed_password = $3, job_title = $4, updated_at = NOW()
+SET email = $2, hashed_password = $3, job_title = $4, first_name = $5, last_name = $6, updated_at = NOW()
 WHERE id = $1
-RETURNING id, created_at, updated_at, email, hashed_password, job_title
+RETURNING id, created_at, updated_at, email, hashed_password, job_title, first_name, last_name
 `
 
 type UpdateUserInfoParams struct {
@@ -115,6 +132,8 @@ type UpdateUserInfoParams struct {
 	Email          string    `json:"email"`
 	HashedPassword string    `json:"-"`
 	JobTitle       string    `json:"job_title"`
+	FirstName      string    `json:"first_name"`
+	LastName       string    `json:"last_name"`
 }
 
 func (q *Queries) UpdateUserInfo(ctx context.Context, arg UpdateUserInfoParams) (User, error) {
@@ -123,6 +142,8 @@ func (q *Queries) UpdateUserInfo(ctx context.Context, arg UpdateUserInfoParams) 
 		arg.Email,
 		arg.HashedPassword,
 		arg.JobTitle,
+		arg.FirstName,
+		arg.LastName,
 	)
 	var i User
 	err := row.Scan(
@@ -132,6 +153,8 @@ func (q *Queries) UpdateUserInfo(ctx context.Context, arg UpdateUserInfoParams) 
 		&i.Email,
 		&i.HashedPassword,
 		&i.JobTitle,
+		&i.FirstName,
+		&i.LastName,
 	)
 	return i, err
 }

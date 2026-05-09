@@ -67,7 +67,7 @@ func main() {
 	mux.HandleFunc("POST /admin/reset", cfg.reset)
 	server := &http.Server{
 		Addr:    ":8080",
-		Handler: middlewareLog(mux),
+		Handler: middlewareCORS(middlewareLog(mux)),
 	}
 	fmt.Println("Server is running on port 8080")
 	server.ListenAndServe()
