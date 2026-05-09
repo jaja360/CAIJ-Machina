@@ -1,0 +1,87 @@
+{
+  "app": {
+    "name": "LexWatch",
+    "tagline": "Just-in-time legal intelligence"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "sources": "Sources",
+    "settings": "Settings"
+  },
+  "home": {
+    "hero": {
+      "title": "Stay ahead of legal and regulatory changes",
+      "subtitle": "AI-powered monitoring that tells you what changed, why it matters, and who is affected — in real time.",
+      "cta": "Go to Dashboard"
+    },
+    "features": {
+      "monitoring": {
+        "title": "Automated Monitoring",
+        "description": "Continuously tracks legislation, regulations, and platform terms of service."
+      },
+      "analysis": {
+        "title": "AI-Powered Analysis",
+        "description": "LLMs contextualize each change and highlight what matters for your industry."
+      },
+      "alerts": {
+        "title": "Smart Alerts",
+        "description": "Receive targeted alerts based on your sectors and clients."
+      }
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Latest legal and regulatory updates",
+    "filters": {
+      "all": "All",
+      "category": "Category",
+      "urgency": "Urgency",
+      "source": "Source",
+      "dateRange": "Date range"
+    },
+    "empty": "No updates match your filters.",
+    "loading": "Loading updates..."
+  },
+  "update": {
+    "urgency": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "category": {
+      "legislation": "Legislation",
+      "regulation": "Regulation",
+      "compliance": "Compliance",
+      "platform": "Platform",
+      "jurisprudence": "Jurisprudence"
+    },
+    "labels": {
+      "publishedAt": "Published",
+      "detectedAt": "Detected",
+      "source": "Source",
+      "affectedSectors": "Affected sectors",
+      "keyChanges": "Key changes",
+      "jurisdiction": "Jurisdiction",
+      "readMore": "Read source"
+    }
+  },
+  "sources": {
+    "title": "Monitored Sources",
+    "add": "Add source",
+    "active": "Active",
+    "inactive": "Inactive",
+    "lastChecked": "Last checked",
+    "empty": "No sources configured."
+  },
+  "common": {
+    "loading": "Loading…",
+    "error": "An error occurred. Please try again.",
+    "retry": "Retry",
+    "close": "Close",
+    "save": "Save",
+    "cancel": "Cancel",
+    "search": "Search…",
+    "noResults": "No results found."
+  }
+}

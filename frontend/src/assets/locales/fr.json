@@ -1,0 +1,87 @@
+{
+  "app": {
+    "name": "LexWatch",
+    "tagline": "Intelligence juridique en temps réel"
+  },
+  "nav": {
+    "home": "Accueil",
+    "dashboard": "Tableau de bord",
+    "sources": "Sources",
+    "settings": "Paramètres"
+  },
+  "home": {
+    "hero": {
+      "title": "Gardez une longueur d'avance sur les changements juridiques et réglementaires",
+      "subtitle": "Une surveillance propulsée par l'IA qui vous indique ce qui a changé, pourquoi c'est important et qui est touché — en temps réel.",
+      "cta": "Accéder au tableau de bord"
+    },
+    "features": {
+      "monitoring": {
+        "title": "Surveillance automatisée",
+        "description": "Suit en continu la législation, la réglementation et les conditions d'utilisation des plateformes."
+      },
+      "analysis": {
+        "title": "Analyse propulsée par l'IA",
+        "description": "Les LLMs contextualisent chaque changement et mettent en évidence ce qui importe pour votre industrie."
+      },
+      "alerts": {
+        "title": "Alertes intelligentes",
+        "description": "Recevez des alertes ciblées en fonction de vos secteurs et clients."
+      }
+    }
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "subtitle": "Dernières mises à jour juridiques et réglementaires",
+    "filters": {
+      "all": "Tout",
+      "category": "Catégorie",
+      "urgency": "Urgence",
+      "source": "Source",
+      "dateRange": "Période"
+    },
+    "empty": "Aucune mise à jour ne correspond à vos filtres.",
+    "loading": "Chargement des mises à jour…"
+  },
+  "update": {
+    "urgency": {
+      "high": "Haute",
+      "medium": "Moyenne",
+      "low": "Faible"
+    },
+    "category": {
+      "legislation": "Législation",
+      "regulation": "Réglementation",
+      "compliance": "Conformité",
+      "platform": "Plateforme",
+      "jurisprudence": "Jurisprudence"
+    },
+    "labels": {
+      "publishedAt": "Publié le",
+      "detectedAt": "Détecté le",
+      "source": "Source",
+      "affectedSectors": "Secteurs touchés",
+      "keyChanges": "Changements clés",
+      "jurisdiction": "Juridiction",
+      "readMore": "Lire la source"
+    }
+  },
+  "sources": {
+    "title": "Sources surveillées",
+    "add": "Ajouter une source",
+    "active": "Active",
+    "inactive": "Inactive",
+    "lastChecked": "Dernière vérification",
+    "empty": "Aucune source configurée."
+  },
+  "common": {
+    "loading": "Chargement…",
+    "error": "Une erreur est survenue. Veuillez réessayer.",
+    "retry": "Réessayer",
+    "close": "Fermer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "search": "Rechercher…",
+    "noResults": "Aucun résultat trouvé."
+  }
+}
