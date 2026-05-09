@@ -41,11 +41,16 @@ var (
 		"subclause-e":  true,
 		"firstdef-e":   true,
 		"definition-e": true,
+		"Section":      true,
+		"Subsection":   true,
+		"Paragraph":    true,
+		"Subparagraph": true,
 	}
 )
 
 type config struct {
 	InputDir        string
+	InputPattern    string
 	OutputDir       string
 	RequestsFile    string
 	APIBaseURL      string
@@ -170,7 +175,8 @@ func run() error {
 		apiKey = os.Getenv("OPENAI_API_KEY")
 	}
 
-	inputDir := flag.String("input-dir", ".", "Directory containing rso-*.html files")
+	inputDir := flag.String("input-dir", ".", "Directory containing legislation HTML files")
+	inputPattern := flag.String("input-pattern", "*.html*", "Filename pattern used to find legislation HTML files recursively")
 	outputDir := flag.String("output-dir", ".", "Directory to write JSON output files")
 	requestsFile := flag.String("requests-file", "requests.txt", "Path to newline-delimited domain keywords")
 	apiBaseURL := flag.String("api-base-url", "https://api.deepseek.com", "DeepSeek API base URL")
@@ -192,12 +198,12 @@ func run() error {
 		return err
 	}
 
-	files, err := filepath.Glob(filepath.Join(*inputDir, "rso-*.html"))
+	files, err := discoverInputFiles(*inputDir, *inputPattern)
 	if err != nil {
 		return err
 	}
 	if len(files) == 0 {
-		return fmt.Errorf("no files matched %s", filepath.Join(*inputDir, "rso-*.html"))
+		return fmt.Errorf("no files matched pattern %q under %s", *inputPattern, *inputDir)
 	}
 	sort.Strings(files)
 
@@ -207,6 +213,7 @@ func run() error {
 
 	cfg := config{
 		InputDir:        *inputDir,
+		InputPattern:    *inputPattern,
 		OutputDir:       *outputDir,
 		RequestsFile:    *requestsFile,
 		APIBaseURL:      strings.TrimRight(*apiBaseURL, "/"),
@@ -304,7 +311,11 @@ func processFile(cfg config, path string) error {
 	if err != nil {
 		return err
 	}
-	outputPath := filepath.Join(cfg.OutputDir, strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))+".json")
+	outputName := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+	if strings.HasSuffix(strings.ToLower(outputName), ".html") {
+		outputName = strings.TrimSuffix(outputName, filepath.Ext(outputName))
+	}
+	outputPath := filepath.Join(cfg.OutputDir, outputName+".json")
 	if err := os.WriteFile(outputPath, encoded, 0o644); err != nil {
 		return err
 	}
@@ -454,7 +465,7 @@ func handleStartTag(state *parserState, name string, attrs map[string]string) {
 		state.InsideP = true
 		classes := classSet(attrs["class"])
 		state.CurrentPClasses = classes
-		if classes["headnote-e"] {
+		if classes["headnote-e"] || classes["MarginalNote"] {
 			state.InHeadnote = true
 			state.HeadnoteParts = nil
 		}
@@ -725,6 +736,39 @@ func loadKeywords(path string) ([]string, error) {
 		return nil, fmt.Errorf("requests file is empty: %s", path)
 	}
 	return keywords, nil
+}
+
+func discoverInputFiles(root, pattern string) ([]string, error) {
+	files := make([]string, 0)
+	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		name := d.Name()
+		matched, matchErr := filepath.Match(pattern, name)
+		if matchErr != nil {
+			return matchErr
+		}
+		if !matched {
+			return nil
+		}
+		lower := strings.ToLower(name)
+		if strings.HasSuffix(lower, ":zone.identifier") {
+			return nil
+		}
+		if !strings.Contains(lower, ".html") {
+			return nil
+		}
+		files = append(files, path)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return files, nil
 }
 
 func normalizeWhitespace(value string) string {
