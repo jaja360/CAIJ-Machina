@@ -32,22 +32,26 @@ func (c *apiConfig) addLaws(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusUnauthorized, "Missing or invalid token")
 		return
 	}
+	fastIngest := r.URL.Query().Get("fast") == "1"
 	in, err := decodeHTMLIngestRequest(r, "law.html")
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	keywords, err := c.systemKeywordNames(r)
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	opts := ChunkOptions{
-		DomainKeywords:    keywords,
-		IncludeDomains:    len(keywords) > 0,
-		EmbeddingModel:    azureEmbeddingModel(),
-		IncludeEmbeddings: azureEmbeddingModel() != "",
+	opts := ChunkOptions{}
+	if !fastIngest {
+		keywords, err := c.systemKeywordNames(r)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		opts = ChunkOptions{
+			DomainKeywords:    keywords,
+			IncludeDomains:    len(keywords) > 0,
+			EmbeddingModel:    azureEmbeddingModel(),
+			IncludeEmbeddings: azureEmbeddingModel() != "",
+		}
 	}
 
 	chunked, err := c.ChunkHTMLLegislation(r.Context(), in.Filename, in.HTML, opts)
@@ -67,7 +71,7 @@ func (c *apiConfig) addLaws(w http.ResponseWriter, r *http.Request) {
 	}
 
 	lawChanges := []database.LawChange{}
-	if hasPreviousLaw {
+	if hasPreviousLaw && !fastIngest {
 		lawChanges, err = c.createLawChanges(r.Context(), previousLaw.ID, law.ID)
 		if err != nil {
 			respondWithError(w, http.StatusInternalServerError, err.Error())

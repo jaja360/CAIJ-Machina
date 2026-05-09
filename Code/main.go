@@ -43,7 +43,6 @@ func main() {
 		platform:     os.Getenv("PLATFORM"),
 	}
 	mux := http.NewServeMux()
-	mux.Handle("/app/", http.StripPrefix("/app", http.FileServer(http.Dir("."))))
 	mux.HandleFunc("GET /api/healthz", healthz)
 	mux.HandleFunc("POST /api/login", cfg.login)
 	mux.HandleFunc("POST /api/users", cfg.postUsers)
