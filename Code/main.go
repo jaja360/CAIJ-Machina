@@ -63,6 +63,8 @@ func main() {
 	mux.HandleFunc("GET /api/keywords", cfg.getKeywords)
 	mux.HandleFunc("POST /api/keywords", cfg.replaceKeywords)
 	mux.HandleFunc("POST /api/refresh", cfg.refresh)
+	mux.HandleFunc("POST /api/agent/new", cfg.createConvo)
+	mux.HandleFunc("POST /api/agent/{convoId}", cfg.contactAgent)
 	mux.HandleFunc("POST /api/revoke", cfg.revoke)
 	mux.HandleFunc("POST /admin/reset", cfg.reset)
 	server := &http.Server{
