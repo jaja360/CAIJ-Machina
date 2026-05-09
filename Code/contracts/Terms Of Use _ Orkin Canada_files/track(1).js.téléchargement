@@ -1,0 +1,5 @@
+(function(){
+var __ats=document.createElement('script');__ats.type='text/javascript';__ats.async=true;
+__ats.src=('https:'==document.location.protocol?'https://':'http://')+'app.avidtrak.com/A8069C23455ea7467f44288d16931eeeacba/track.js';
+var __spn=document.getElementsByTagName('script')[0];__spn.parentNode.insertBefore(__ats,__spn);
+})();
