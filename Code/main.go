@@ -13,6 +13,7 @@ import (
 )
 
 type apiConfig struct {
+	sqlDB        *sql.DB
 	db           *database.Queries
 	openaiClient openai.Client
 	jwtSecret    string
@@ -35,6 +36,7 @@ func main() {
 	defer db.Close()
 
 	cfg := &apiConfig{
+		sqlDB:        db,
 		db:           database.New(db),
 		openaiClient: newOpenAIClient(),
 		jwtSecret:    os.Getenv("JWT_SECRET"),

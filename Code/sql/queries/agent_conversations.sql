@@ -1,6 +1,6 @@
 -- name: CreateAgentConversation :one
-INSERT INTO agent_conversations (client_id, user_id)
-VALUES ($1, $2)
+INSERT INTO agent_conversations (client_id, user_id, azure_conversation_id)
+VALUES ($1, $2, $3)
 RETURNING *;
 
 -- name: GetAgentConversation :one
@@ -29,6 +29,13 @@ ORDER BY updated_at DESC;
 UPDATE agent_conversations
 SET updated_at = NOW()
 WHERE id = $1;
+
+-- name: SetAgentConversationAzureID :one
+UPDATE agent_conversations
+SET azure_conversation_id = $2,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING *;
 
 -- name: DeleteAgentConversation :exec
 DELETE FROM agent_conversations

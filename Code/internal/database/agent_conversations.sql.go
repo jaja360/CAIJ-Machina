@@ -7,23 +7,25 @@ package database
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
 
 const createAgentConversation = `-- name: CreateAgentConversation :one
-INSERT INTO agent_conversations (client_id, user_id)
-VALUES ($1, $2)
-RETURNING id, created_at, updated_at, client_id, user_id
+INSERT INTO agent_conversations (client_id, user_id, azure_conversation_id)
+VALUES ($1, $2, $3)
+RETURNING id, created_at, updated_at, client_id, user_id, azure_conversation_id
 `
 
 type CreateAgentConversationParams struct {
-	ClientID uuid.NullUUID `json:"client_id"`
-	UserID   uuid.NullUUID `json:"user_id"`
+	ClientID            uuid.NullUUID  `json:"client_id"`
+	UserID              uuid.NullUUID  `json:"user_id"`
+	AzureConversationID sql.NullString `json:"azure_conversation_id"`
 }
 
 func (q *Queries) CreateAgentConversation(ctx context.Context, arg CreateAgentConversationParams) (AgentConversation, error) {
-	row := q.db.QueryRowContext(ctx, createAgentConversation, arg.ClientID, arg.UserID)
+	row := q.db.QueryRowContext(ctx, createAgentConversation, arg.ClientID, arg.UserID, arg.AzureConversationID)
 	var i AgentConversation
 	err := row.Scan(
 		&i.ID,
@@ -31,6 +33,7 @@ func (q *Queries) CreateAgentConversation(ctx context.Context, arg CreateAgentCo
 		&i.UpdatedAt,
 		&i.ClientID,
 		&i.UserID,
+		&i.AzureConversationID,
 	)
 	return i, err
 }
@@ -82,7 +85,7 @@ func (q *Queries) DeleteAgentConversationMessages(ctx context.Context, conversat
 }
 
 const getAgentConversation = `-- name: GetAgentConversation :one
-SELECT id, created_at, updated_at, client_id, user_id
+SELECT id, created_at, updated_at, client_id, user_id, azure_conversation_id
 FROM agent_conversations
 WHERE id = $1
 `
@@ -96,6 +99,7 @@ func (q *Queries) GetAgentConversation(ctx context.Context, id uuid.UUID) (Agent
 		&i.UpdatedAt,
 		&i.ClientID,
 		&i.UserID,
+		&i.AzureConversationID,
 	)
 	return i, err
 }
@@ -138,7 +142,7 @@ func (q *Queries) ListAgentConversationMessages(ctx context.Context, conversatio
 }
 
 const listAgentConversations = `-- name: ListAgentConversations :many
-SELECT id, created_at, updated_at, client_id, user_id
+SELECT id, created_at, updated_at, client_id, user_id, azure_conversation_id
 FROM agent_conversations
 ORDER BY updated_at DESC
 `
@@ -158,6 +162,7 @@ func (q *Queries) ListAgentConversations(ctx context.Context) ([]AgentConversati
 			&i.UpdatedAt,
 			&i.ClientID,
 			&i.UserID,
+			&i.AzureConversationID,
 		); err != nil {
 			return nil, err
 		}
@@ -173,7 +178,7 @@ func (q *Queries) ListAgentConversations(ctx context.Context) ([]AgentConversati
 }
 
 const listAgentConversationsByClient = `-- name: ListAgentConversationsByClient :many
-SELECT id, created_at, updated_at, client_id, user_id
+SELECT id, created_at, updated_at, client_id, user_id, azure_conversation_id
 FROM agent_conversations
 WHERE client_id = $1
 ORDER BY updated_at DESC
@@ -194,6 +199,7 @@ func (q *Queries) ListAgentConversationsByClient(ctx context.Context, clientID u
 			&i.UpdatedAt,
 			&i.ClientID,
 			&i.UserID,
+			&i.AzureConversationID,
 		); err != nil {
 			return nil, err
 		}
@@ -209,7 +215,7 @@ func (q *Queries) ListAgentConversationsByClient(ctx context.Context, clientID u
 }
 
 const listAgentConversationsByUser = `-- name: ListAgentConversationsByUser :many
-SELECT id, created_at, updated_at, client_id, user_id
+SELECT id, created_at, updated_at, client_id, user_id, azure_conversation_id
 FROM agent_conversations
 WHERE user_id = $1
 ORDER BY updated_at DESC
@@ -230,6 +236,7 @@ func (q *Queries) ListAgentConversationsByUser(ctx context.Context, userID uuid.
 			&i.UpdatedAt,
 			&i.ClientID,
 			&i.UserID,
+			&i.AzureConversationID,
 		); err != nil {
 			return nil, err
 		}
@@ -242,6 +249,33 @@ func (q *Queries) ListAgentConversationsByUser(ctx context.Context, userID uuid.
 		return nil, err
 	}
 	return items, nil
+}
+
+const setAgentConversationAzureID = `-- name: SetAgentConversationAzureID :one
+UPDATE agent_conversations
+SET azure_conversation_id = $2,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, created_at, updated_at, client_id, user_id, azure_conversation_id
+`
+
+type SetAgentConversationAzureIDParams struct {
+	ID                  uuid.UUID      `json:"id"`
+	AzureConversationID sql.NullString `json:"azure_conversation_id"`
+}
+
+func (q *Queries) SetAgentConversationAzureID(ctx context.Context, arg SetAgentConversationAzureIDParams) (AgentConversation, error) {
+	row := q.db.QueryRowContext(ctx, setAgentConversationAzureID, arg.ID, arg.AzureConversationID)
+	var i AgentConversation
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ClientID,
+		&i.UserID,
+		&i.AzureConversationID,
+	)
+	return i, err
 }
 
 const touchAgentConversation = `-- name: TouchAgentConversation :exec

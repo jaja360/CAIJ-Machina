@@ -12,11 +12,12 @@ import (
 )
 
 type AgentConversation struct {
-	ID        uuid.UUID     `json:"id"`
-	CreatedAt time.Time     `json:"created_at"`
-	UpdatedAt time.Time     `json:"updated_at"`
-	ClientID  uuid.NullUUID `json:"client_id"`
-	UserID    uuid.NullUUID `json:"user_id"`
+	ID                  uuid.UUID      `json:"id"`
+	CreatedAt           time.Time      `json:"created_at"`
+	UpdatedAt           time.Time      `json:"updated_at"`
+	ClientID            uuid.NullUUID  `json:"client_id"`
+	UserID              uuid.NullUUID  `json:"user_id"`
+	AzureConversationID sql.NullString `json:"azure_conversation_id"`
 }
 
 type AgentConversationMessage struct {
