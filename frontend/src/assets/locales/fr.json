@@ -1,87 +1,232 @@
 {
   "app": {
-    "name": "LexWatch",
-    "tagline": "Intelligence juridique en temps réel"
+    "name": "LexVeille",
+    "domain": "Droit agri & santé",
+    "domainFull": "Droit agricole & santé"
   },
   "nav": {
-    "home": "Accueil",
-    "dashboard": "Tableau de bord",
-    "sources": "Sources",
-    "settings": "Paramètres"
-  },
-  "home": {
-    "hero": {
-      "title": "Gardez une longueur d'avance sur les changements juridiques et réglementaires",
-      "subtitle": "Une surveillance propulsée par l'IA qui vous indique ce qui a changé, pourquoi c'est important et qui est touché — en temps réel.",
-      "cta": "Accéder au tableau de bord"
+    "sections": { "veille": "Veille", "gestion": "Gestion" },
+    "items": {
+      "dashboard": "Tableau de bord",
+      "alertes": "Alertes",
+      "contrats": "Modèles de contrats",
+      "clients": "Clients",
+      "historique": "Historique"
     },
-    "features": {
-      "monitoring": {
-        "title": "Surveillance automatisée",
-        "description": "Suit en continu la législation, la réglementation et les conditions d'utilisation des plateformes."
-      },
-      "analysis": {
-        "title": "Analyse propulsée par l'IA",
-        "description": "Les LLMs contextualisent chaque changement et mettent en évidence ce qui importe pour votre industrie."
-      },
-      "alerts": {
-        "title": "Alertes intelligentes",
-        "description": "Recevez des alertes ciblées en fonction de vos secteurs et clients."
-      }
-    }
+    "settings": "Paramètres",
+    "collapse": "Réduire",
+    "expand": "Déployer"
+  },
+  "agent": {
+    "name": "Assistant LexVeille",
+    "defaultStatus": "Actif · accès complet",
+    "collapse": "Réduire",
+    "open": "Ouvrir l'assistant",
+    "placeholder": "Posez une question…"
   },
   "dashboard": {
-    "title": "Tableau de bord",
-    "subtitle": "Dernières mises à jour juridiques et réglementaires",
-    "filters": {
-      "all": "Tout",
-      "category": "Catégorie",
-      "urgency": "Urgence",
-      "source": "Source",
-      "dateRange": "Période"
+    "greeting": "Bonjour, {{name}}",
+    "subtitle": "{{count}} alertes actives",
+    "kpi": {
+      "active": "Alertes élevées",
+      "critical": "Critiques",
+      "thisWeek": "+{{count}} cette semaine",
+      "exposed": "{{count}} clients exposés",
+      "deadline": "{{date}} – délai",
+      "thisMonth": "+{{count}} ce mois-ci"
     },
-    "empty": "Aucune mise à jour ne correspond à vos filtres.",
-    "loading": "Chargement des mises à jour…"
-  },
-  "update": {
-    "urgency": {
-      "high": "Haute",
-      "medium": "Moyenne",
-      "low": "Faible"
-    },
-    "category": {
-      "legislation": "Législation",
-      "regulation": "Réglementation",
-      "compliance": "Conformité",
-      "platform": "Plateforme",
-      "jurisprudence": "Jurisprudence"
-    },
-    "labels": {
-      "publishedAt": "Publié le",
-      "detectedAt": "Détecté le",
-      "source": "Source",
-      "affectedSectors": "Secteurs touchés",
-      "keyChanges": "Changements clés",
-      "jurisdiction": "Juridiction",
-      "readMore": "Lire la source"
+    "sections": {
+      "critical": "Alertes critiques",
+      "high": "Alertes élevées"
     }
   },
-  "sources": {
-    "title": "Sources surveillées",
-    "add": "Ajouter une source",
-    "active": "Active",
-    "inactive": "Inactive",
-    "lastChecked": "Dernière vérification",
-    "empty": "Aucune source configurée."
+  "alert": {
+    "severity": { "critical": "Critique", "high": "Élevé" },
+    "impact": { "high": "Impact élevé", "medium": "Impact modéré" },
+    "stats": {
+      "modifications": "Modifications",
+      "contracts": "Contrats",
+      "clients": "Clients",
+      "deadline": "Délai"
+    },
+    "sections": { "modifications": "Modifications détectées — article par article" },
+    "labels": { "contracts": "Contrats :" },
+    "actions": {
+      "export": "Exporter",
+      "viewContracts": "Voir les contrats",
+      "openContract": "Ouvrir un contrat"
+    },
+    "back": "Retour au tableau de bord",
+    "footer": "{{contracts}} contrats à réviser · {{clients}} clients à notifier · Délai :"
+  },
+  "contract": {
+    "labels": {
+      "clausesToModify": "{{count}} clauses à modifier",
+      "signed": "Signé le {{date}}",
+      "actionRequired": "Action requise avant le {{date}}",
+      "clausesTitle": "Clauses actuelles — à modifier",
+      "actionsTitle": "Actions à mener",
+      "newText": "Nouveau texte",
+      "addClause": "Clause à ajouter",
+      "legalNote": "Note juridique",
+      "nextLabel": "Contrat suivant : {{label}}"
+    },
+    "chip": { "urgent": "Urgent", "toRevise": "À réviser" },
+    "actions": {
+      "exportAmendment": "Exporter l'avenant",
+      "notify": "Notifier le client",
+      "next": "Contrat suivant"
+    },
+    "back": "ARLA glyphosate — contrats affectés"
+  },
+  "notify": {
+    "steps": {
+      "1": "Alerte détectée",
+      "2": "Modifications analysées",
+      "3": "Contrat révisé",
+      "4": "Notifier le client",
+      "5": "Archiver"
+    },
+    "sections": {
+      "client": "Client",
+      "attachment": "Pièce jointe",
+      "email": "Message au client — rédigé par l'IA, à valider"
+    },
+    "email": {
+      "to": "À",
+      "cc": "Cc",
+      "subject": "Objet",
+      "aiDisclaimer": "Rédigé par IA — vérifiez avant envoi",
+      "edit": "Modifier",
+      "send": "Envoyer",
+      "sent": "Envoyé",
+      "preview": "Aperçu"
+    },
+    "attachment": { "meta": "Généré · {{count}} clauses modifiées · à signer" },
+    "chip": { "urgent": "Action urgente" },
+    "footer": {
+      "sent": "✓ Courriel envoyé.",
+      "remaining": "Après envoi : {{count}} autres clients restent à notifier pour cette alerte",
+      "nextClient": "Client suivant"
+    },
+    "back": "Contrat {{id}}"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "subtitle": "Configuration de la veille, des alertes et des dossiers",
+    "navSections": { "veille": "Veille", "alertes": "Alertes", "dossiers": "Dossiers" },
+    "tabs": {
+      "domains": "Domaines",
+      "keywords": "Mots-clés",
+      "sources": "Sources",
+      "levels": "Niveaux",
+      "freq": "Fréquence",
+      "notifs": "Notifications",
+      "clients": "Clients",
+      "contracts": "Contrats"
+    },
+    "domains": {
+      "title": "Domaines de veille",
+      "description": "Sélectionnez les domaines juridiques à surveiller. Les alertes seront filtrées selon ces choix.",
+      "header": "Domaines actifs",
+      "count": "{{active}} sur {{total}} activés"
+    },
+    "keywords": {
+      "title": "Mots-clés de surveillance",
+      "description": "Termes analysés dans toutes les sources connectées pour générer les alertes.",
+      "header": "Mots-clés actifs",
+      "count": "{{count}} termes",
+      "add": "+ Ajouter un terme"
+    },
+    "alertConfig": {
+      "title": "Configuration des alertes",
+      "description": "Fréquence, niveaux et canaux de notification.",
+      "freqHeader": "Fréquence",
+      "notifsHeader": "Notifications",
+      "freq": {
+        "rt":   { "label": "Temps réel",            "sub": "Alerte dès détection"  },
+        "day":  { "label": "Résumé quotidien",       "sub": "Chaque matin à 8h"     },
+        "week": { "label": "Résumé hebdomadaire",    "sub": "Tous les lundis"       }
+      },
+      "notifs": {
+        "mail":   { "label": "Courriel",             "sub": "{{email}}"             },
+        "mobile": { "label": "Notification mobile",  "sub": "Application LexVeille" },
+        "slack":  { "label": "Slack",                "sub": "Non configuré"         },
+        "teams":  { "label": "Microsoft Teams",      "sub": "Non configuré"         }
+      }
+    },
+    "sources": {
+      "title": "Sources de veille",
+      "description": "Bases de données officielles et flux RSS analysés automatiquement.",
+      "header": "Sources actives",
+      "count": "{{active}} sur {{total}}",
+      "active": "Actif",
+      "inactive": "Inactif",
+      "add": "Ajouter une source (URL, RSS ou flux officiel)"
+    },
+    "clients": {
+      "title": "Clients & dossiers",
+      "description": "Les contrats importés sont analysés automatiquement à chaque nouvelle alerte.",
+      "header": "Clients actifs",
+      "count": "{{count}} contrats",
+      "manage": "Gérer",
+      "add": "+ Ajouter",
+      "import": "Importer des contrats (.pdf, .docx) — analysés automatiquement"
+    },
+    "footer": {
+      "unsaved": "Modifications non sauvegardées",
+      "cancel": "Annuler",
+      "save": "Enregistrer les paramètres"
+    }
+  },
+  "onboarding": {
+    "skip": "Passer pour le moment",
+    "title": "Configurez votre veille",
+    "subtitle": "Paramétrez vos domaines, mots-clés et sources en 3 étapes.",
+    "stepLabel": "Étape {{current}} sur {{total}}",
+    "steps": {
+      "1": { "name": "Domaines & mots-clés",  "sub": "Axes de veille juridique"   },
+      "2": { "name": "Sources de données",    "sub": "Flux officiels & RSS"        },
+      "3": { "name": "Clients & alertes",     "sub": "Dossiers et notifications"   }
+    },
+    "titles": {
+      "1": "Choisissez vos domaines de veille",
+      "2": "Sélectionnez vos sources de données",
+      "3": "Importez vos clients et configurez les alertes"
+    },
+    "keywordsLabel": "Mots-clés de surveillance",
+    "keywordsAdd": "+ Ajouter un terme",
+    "upload": {
+      "title": "Importez vos contrats existants",
+      "subtitle": "Formats acceptés : .pdf, .docx — analyse automatique par l'IA",
+      "browse": "Parcourir mes fichiers"
+    },
+    "alertsBy": "Recevoir les alertes par",
+    "channel": {
+      "email": "Courriel",
+      "mobile": "Mobile",
+      "slack": "Slack",
+      "teams": "Teams"
+    },
+    "prev": "Précédent",
+    "next": "Continuer",
+    "finish": "Terminer la configuration",
+    "trust": {
+      "canlii": "CanLII certifié",
+      "journals": "Journaux officiels",
+      "gov": "Sources gouvernementales"
+    }
+  },
+  "history": {
+    "title": "Historique",
+    "subtitle": "Toutes les alertes traitées au cours des 90 derniers jours",
+    "comingSoon": "Vue à venir",
+    "description": "Cette section listera vos alertes archivées, leur résolution et l'avenant ou courriel associés.",
+    "back": "← Retour au tableau de bord"
   },
   "common": {
     "loading": "Chargement…",
     "error": "Une erreur est survenue. Veuillez réessayer.",
-    "retry": "Réessayer",
-    "close": "Fermer",
-    "save": "Enregistrer",
-    "cancel": "Annuler",
-    "search": "Rechercher…",
-    "noResults": "Aucun résultat trouvé."
+    "retry": "Réessayer"
   }
 }

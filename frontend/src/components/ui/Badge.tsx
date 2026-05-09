@@ -3,6 +3,7 @@ import type { UrgencyLevel, UpdateCategory } from "@/types";
 type BadgeVariant = UrgencyLevel | UpdateCategory | "neutral";
 
 const variantClasses: Record<BadgeVariant, string> = {
+  critical: "bg-red-100 text-red-800",
   high: "bg-red-100 text-red-800",
   medium: "bg-amber-100 text-amber-800",
   low: "bg-green-100 text-green-800",
