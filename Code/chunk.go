@@ -25,7 +25,7 @@ import (
 const (
 	chunkMetadataScriptID = "caijtdm"
 	chunkOriginalDocument = "originalDocument"
-	chunkDomainPrompt     = "You classify a legal text chunk into up to 3 domains from a fixed keyword list. Return only strict JSON with the shape {\"domains\": [\"keyword1\", \"keyword2\"]}. Use only exact keywords from the provided list. Return an empty array when none apply."
+	chunkDomainPrompt     = "You classify a legal text chunk into up to 3 domains from a fixed keyword list given here [Agriculture,Agricultural,Food, Food and safety, Population safety] Return only strict JSON with the shape {\"domains\": [\"keyword1\", \"keyword2\"]}. Use only exact keywords from the provided list. Return an empty array when none apply."
 )
 
 var (
