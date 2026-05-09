@@ -68,7 +68,7 @@ func (c *apiConfig) addLaws(w http.ResponseWriter, r *http.Request) {
 
 	lawChanges := []database.LawChange{}
 	if hasPreviousLaw {
-		lawChanges, err = c.createLawChangesForLawVersions(r.Context(), previousLaw.ID, law.ID)
+		lawChanges, err = c.createLawChanges(r.Context(), previousLaw.ID, law.ID)
 		if err != nil {
 			respondWithError(w, http.StatusInternalServerError, err.Error())
 			return
@@ -145,12 +145,4 @@ func (c *apiConfig) systemKeywordNames(r *http.Request) ([]string, error) {
 		}
 	}
 	return names, nil
-}
-
-func truncateForPrompt(value string) string {
-	value = strings.TrimSpace(value)
-	if len(value) <= 1200 {
-		return value
-	}
-	return value[:1200] + "..."
 }

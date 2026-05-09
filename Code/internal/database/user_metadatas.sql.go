@@ -85,7 +85,7 @@ func (q *Queries) ListUserKeywords(ctx context.Context, userID uuid.UUID) ([]Lis
 }
 
 const listUsersByKeyword = `-- name: ListUsersByKeyword :many
-SELECT users.id, users.created_at, users.updated_at, users.email, users.hashed_password, users.job_title
+SELECT users.id, users.created_at, users.updated_at, users.email, users.hashed_password, users.job_title, users.first_name, users.last_name
 FROM user_metadatas
 JOIN users ON users.id = user_metadatas.user_id
 WHERE user_metadatas.keyword = $1
@@ -108,6 +108,8 @@ func (q *Queries) ListUsersByKeyword(ctx context.Context, keyword uuid.UUID) ([]
 			&i.Email,
 			&i.HashedPassword,
 			&i.JobTitle,
+			&i.FirstName,
+			&i.LastName,
 		); err != nil {
 			return nil, err
 		}

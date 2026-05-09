@@ -13,10 +13,10 @@ func TestChunkHTMLLegislationParsesRecords(t *testing.T) {
 	htmlContent := `<!doctype html>
 <html>
 <head>
-  <!-- last modification date : April 9, 2026, 3:29:33 AM EDT -->
-  <!-- update date : April 9, 2026, 8:03:10 AM EDT -->
-  <title>R.S.O. 1990, c. E.1 | Example Act</title>
-  <script id="caijtdm">[{"anchor":"sec1","sectionNumber":"1.","paragraphNumber":"","marginalNote":"Purpose"}]</script>
+	  <meta name="entryIntoForceDate" content="2026-04-09">
+	  <meta name="endInForceDate" content="2026-04-10">
+	  <title>R.S.O. 1990, c. E.1 | Example Act</title>
+	  <script id="caijtdm">[{"anchor":"sec1","sectionNumber":"1.","paragraphNumber":"","marginalNote":"Purpose"}]</script>
 </head>
 <body>
   <div id="originalDocument">
@@ -143,13 +143,33 @@ func TestChunkHTMLContractParsesRecords(t *testing.T) {
 
 func TestParseChunkLawDates(t *testing.T) {
 	datePlaced, dateReplaced, err := parseChunkLawDates(`
+<meta name="entryIntoForceDate" content="2026-04-09">
+<meta name="endInForceDate" content="2026-04-10">`)
+	if err != nil {
+		t.Fatalf("parseChunkLawDates returned error: %v", err)
+	}
+	if datePlaced == nil || dateReplaced == nil {
+		t.Fatal("expected both dates to be parsed")
+	}
+	placedWant := time.Date(2026, time.April, 9, 0, 0, 0, 0, time.UTC)
+	replacedWant := time.Date(2026, time.April, 10, 0, 0, 0, 0, time.UTC)
+	if !datePlaced.Equal(placedWant) {
+		t.Errorf("expected datePlaced %v, got %v", placedWant, datePlaced)
+	}
+	if !dateReplaced.Equal(replacedWant) {
+		t.Errorf("expected dateReplaced %v, got %v", replacedWant, dateReplaced)
+	}
+}
+
+func TestParseChunkLawDatesFallsBackToCommentDates(t *testing.T) {
+	datePlaced, dateReplaced, err := parseChunkLawDates(`
 <!-- last modification date : April 9, 2026, 3:29:33 AM EDT -->
 <!-- update date : April 9, 2026, 8:03:10 AM EDT -->`)
 	if err != nil {
 		t.Fatalf("parseChunkLawDates returned error: %v", err)
 	}
 	if datePlaced == nil || dateReplaced == nil {
-		t.Fatal("expected both dates to be parsed")
+		t.Fatal("expected fallback dates to be parsed")
 	}
 	placedWant := time.Date(2026, time.April, 9, 8, 3, 10, 0, datePlaced.Location())
 	replacedWant := time.Date(2026, time.April, 9, 3, 29, 33, 0, dateReplaced.Location())

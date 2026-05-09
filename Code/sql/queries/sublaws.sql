@@ -1,6 +1,6 @@
 -- name: CreateSublaw :one
-INSERT INTO sublaws (citation, sequence, anchor, content, embedding, keywords, document_id)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO sublaws (name, citation, sequence, anchor, content, embedding, keywords, document_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING *;
 
 -- name: GetSublaw :one
@@ -33,7 +33,7 @@ ORDER BY created_at DESC;
 
 -- name: UpdateSublaw :one
 UPDATE sublaws
-SET citation = $2, sequence = $3, anchor = $4, content = $5, embedding = $6, keywords = $7, document_id = $8, updated_at = NOW()
+SET name = $2, citation = $3, sequence = $4, anchor = $5, content = $6, embedding = $7, keywords = $8, document_id = $9, updated_at = NOW()
 WHERE id = $1
 RETURNING *;
 

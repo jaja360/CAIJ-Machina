@@ -26,19 +26,25 @@ func (q *Queries) CountRecentLaws(ctx context.Context) (int64, error) {
 }
 
 const createLaw = `-- name: CreateLaw :one
-INSERT INTO laws (citation, date_placed, date_replaced)
-VALUES ($1, $2, $3)
-RETURNING id, created_at, updated_at, citation, date_placed, date_replaced
+INSERT INTO laws (name, citation, date_placed, date_replaced)
+VALUES ($1, $2, $3, $4)
+RETURNING id, created_at, updated_at, citation, date_placed, date_replaced, name
 `
 
 type CreateLawParams struct {
+	Name         string       `json:"name"`
 	Citation     string       `json:"citation"`
 	DatePlaced   sql.NullTime `json:"date_placed"`
 	DateReplaced sql.NullTime `json:"date_replaced"`
 }
 
 func (q *Queries) CreateLaw(ctx context.Context, arg CreateLawParams) (Law, error) {
-	row := q.db.QueryRowContext(ctx, createLaw, arg.Citation, arg.DatePlaced, arg.DateReplaced)
+	row := q.db.QueryRowContext(ctx, createLaw,
+		arg.Name,
+		arg.Citation,
+		arg.DatePlaced,
+		arg.DateReplaced,
+	)
 	var i Law
 	err := row.Scan(
 		&i.ID,
@@ -47,6 +53,7 @@ func (q *Queries) CreateLaw(ctx context.Context, arg CreateLawParams) (Law, erro
 		&i.Citation,
 		&i.DatePlaced,
 		&i.DateReplaced,
+		&i.Name,
 	)
 	return i, err
 }
@@ -62,7 +69,7 @@ func (q *Queries) DeleteLaw(ctx context.Context, id uuid.UUID) error {
 }
 
 const getLatestLawByCitation = `-- name: GetLatestLawByCitation :one
-SELECT id, created_at, updated_at, citation, date_placed, date_replaced
+SELECT id, created_at, updated_at, citation, date_placed, date_replaced, name
 FROM laws
 WHERE citation = $1
 ORDER BY date_placed DESC NULLS LAST, created_at DESC
@@ -79,12 +86,13 @@ func (q *Queries) GetLatestLawByCitation(ctx context.Context, citation string) (
 		&i.Citation,
 		&i.DatePlaced,
 		&i.DateReplaced,
+		&i.Name,
 	)
 	return i, err
 }
 
 const getLaw = `-- name: GetLaw :one
-SELECT id, created_at, updated_at, citation, date_placed, date_replaced
+SELECT id, created_at, updated_at, citation, date_placed, date_replaced, name
 FROM laws
 WHERE id = $1
 `
@@ -99,12 +107,13 @@ func (q *Queries) GetLaw(ctx context.Context, id uuid.UUID) (Law, error) {
 		&i.Citation,
 		&i.DatePlaced,
 		&i.DateReplaced,
+		&i.Name,
 	)
 	return i, err
 }
 
 const listActiveLaws = `-- name: ListActiveLaws :many
-SELECT id, created_at, updated_at, citation, date_placed, date_replaced
+SELECT id, created_at, updated_at, citation, date_placed, date_replaced, name
 FROM laws
 WHERE date_replaced IS NULL
 ORDER BY citation ASC
@@ -126,6 +135,7 @@ func (q *Queries) ListActiveLaws(ctx context.Context) ([]Law, error) {
 			&i.Citation,
 			&i.DatePlaced,
 			&i.DateReplaced,
+			&i.Name,
 		); err != nil {
 			return nil, err
 		}
@@ -141,7 +151,7 @@ func (q *Queries) ListActiveLaws(ctx context.Context) ([]Law, error) {
 }
 
 const listLaws = `-- name: ListLaws :many
-SELECT id, created_at, updated_at, citation, date_placed, date_replaced
+SELECT id, created_at, updated_at, citation, date_placed, date_replaced, name
 FROM laws
 ORDER BY created_at DESC
 `
@@ -162,6 +172,7 @@ func (q *Queries) ListLaws(ctx context.Context) ([]Law, error) {
 			&i.Citation,
 			&i.DatePlaced,
 			&i.DateReplaced,
+			&i.Name,
 		); err != nil {
 			return nil, err
 		}
@@ -180,7 +191,7 @@ const markLawReplaced = `-- name: MarkLawReplaced :one
 UPDATE laws
 SET date_replaced = $2, updated_at = NOW()
 WHERE id = $1
-RETURNING id, created_at, updated_at, citation, date_placed, date_replaced
+RETURNING id, created_at, updated_at, citation, date_placed, date_replaced, name
 `
 
 type MarkLawReplacedParams struct {
@@ -198,12 +209,13 @@ func (q *Queries) MarkLawReplaced(ctx context.Context, arg MarkLawReplacedParams
 		&i.Citation,
 		&i.DatePlaced,
 		&i.DateReplaced,
+		&i.Name,
 	)
 	return i, err
 }
 
 const searchLawsByCitation = `-- name: SearchLawsByCitation :many
-SELECT id, created_at, updated_at, citation, date_placed, date_replaced
+SELECT id, created_at, updated_at, citation, date_placed, date_replaced, name
 FROM laws
 WHERE citation ILIKE '%' || $1 || '%'
 ORDER BY citation ASC
@@ -225,6 +237,7 @@ func (q *Queries) SearchLawsByCitation(ctx context.Context, dollar_1 sql.NullStr
 			&i.Citation,
 			&i.DatePlaced,
 			&i.DateReplaced,
+			&i.Name,
 		); err != nil {
 			return nil, err
 		}
@@ -241,13 +254,14 @@ func (q *Queries) SearchLawsByCitation(ctx context.Context, dollar_1 sql.NullStr
 
 const updateLaw = `-- name: UpdateLaw :one
 UPDATE laws
-SET citation = $2, date_placed = $3, date_replaced = $4, updated_at = NOW()
+SET name = $2, citation = $3, date_placed = $4, date_replaced = $5, updated_at = NOW()
 WHERE id = $1
-RETURNING id, created_at, updated_at, citation, date_placed, date_replaced
+RETURNING id, created_at, updated_at, citation, date_placed, date_replaced, name
 `
 
 type UpdateLawParams struct {
 	ID           uuid.UUID    `json:"id"`
+	Name         string       `json:"name"`
 	Citation     string       `json:"citation"`
 	DatePlaced   sql.NullTime `json:"date_placed"`
 	DateReplaced sql.NullTime `json:"date_replaced"`
@@ -256,6 +270,7 @@ type UpdateLawParams struct {
 func (q *Queries) UpdateLaw(ctx context.Context, arg UpdateLawParams) (Law, error) {
 	row := q.db.QueryRowContext(ctx, updateLaw,
 		arg.ID,
+		arg.Name,
 		arg.Citation,
 		arg.DatePlaced,
 		arg.DateReplaced,
@@ -268,6 +283,7 @@ func (q *Queries) UpdateLaw(ctx context.Context, arg UpdateLawParams) (Law, erro
 		&i.Citation,
 		&i.DatePlaced,
 		&i.DateReplaced,
+		&i.Name,
 	)
 	return i, err
 }

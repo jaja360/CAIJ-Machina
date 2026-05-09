@@ -54,6 +54,7 @@ func main() {
 	mux.HandleFunc("GET /api/kpi", cfg.getKpi)
 	mux.HandleFunc("GET /api/documents", cfg.getDocuments)
 	mux.HandleFunc("POST /api/documents", cfg.addDocuments)
+	mux.HandleFunc("PUT /api/law", cfg.addLaws)
 	mux.HandleFunc("PUT /api/laws", cfg.addLaws)
 	mux.HandleFunc("GET /api/laws", cfg.getLaws)
 	mux.HandleFunc("GET /api/laws/changes/{lawA}/{lawB}", cfg.getLawChanges)

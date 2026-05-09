@@ -25,9 +25,9 @@ func (q *Queries) CountRecentLawChanges(ctx context.Context) (int64, error) {
 }
 
 const createLawChange = `-- name: CreateLawChange :one
-INSERT INTO law_changes (explanation, law_id_old, law_id_new, sub_law_id_old, sub_law_id_new)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, created_at, updated_at, explanation, law_id_old, law_id_new, sub_law_id_old, sub_law_id_new
+INSERT INTO law_changes (explanation, law_id_old, law_id_new, sub_law_id_old, sub_law_id_new, old_text, new_text)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, created_at, updated_at, explanation, law_id_old, law_id_new, sub_law_id_old, sub_law_id_new, old_text, new_text
 `
 
 type CreateLawChangeParams struct {
@@ -36,6 +36,8 @@ type CreateLawChangeParams struct {
 	LawIDNew    uuid.UUID `json:"law_id_new"`
 	SubLawIDOld uuid.UUID `json:"sub_law_id_old"`
 	SubLawIDNew uuid.UUID `json:"sub_law_id_new"`
+	OldText     string    `json:"old_text"`
+	NewText     string    `json:"new_text"`
 }
 
 func (q *Queries) CreateLawChange(ctx context.Context, arg CreateLawChangeParams) (LawChange, error) {
@@ -45,6 +47,8 @@ func (q *Queries) CreateLawChange(ctx context.Context, arg CreateLawChangeParams
 		arg.LawIDNew,
 		arg.SubLawIDOld,
 		arg.SubLawIDNew,
+		arg.OldText,
+		arg.NewText,
 	)
 	var i LawChange
 	err := row.Scan(
@@ -56,6 +60,8 @@ func (q *Queries) CreateLawChange(ctx context.Context, arg CreateLawChangeParams
 		&i.LawIDNew,
 		&i.SubLawIDOld,
 		&i.SubLawIDNew,
+		&i.OldText,
+		&i.NewText,
 	)
 	return i, err
 }
@@ -70,8 +76,23 @@ func (q *Queries) DeleteLawChange(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const deleteLawChangesBetween = `-- name: DeleteLawChangesBetween :exec
+DELETE FROM law_changes
+WHERE law_id_old = $1 AND law_id_new = $2
+`
+
+type DeleteLawChangesBetweenParams struct {
+	LawIDOld uuid.UUID `json:"law_id_old"`
+	LawIDNew uuid.UUID `json:"law_id_new"`
+}
+
+func (q *Queries) DeleteLawChangesBetween(ctx context.Context, arg DeleteLawChangesBetweenParams) error {
+	_, err := q.db.ExecContext(ctx, deleteLawChangesBetween, arg.LawIDOld, arg.LawIDNew)
+	return err
+}
+
 const getLawChange = `-- name: GetLawChange :one
-SELECT id, created_at, updated_at, explanation, law_id_old, law_id_new, sub_law_id_old, sub_law_id_new
+SELECT id, created_at, updated_at, explanation, law_id_old, law_id_new, sub_law_id_old, sub_law_id_new, old_text, new_text
 FROM law_changes
 WHERE id = $1
 `
@@ -88,12 +109,14 @@ func (q *Queries) GetLawChange(ctx context.Context, id uuid.UUID) (LawChange, er
 		&i.LawIDNew,
 		&i.SubLawIDOld,
 		&i.SubLawIDNew,
+		&i.OldText,
+		&i.NewText,
 	)
 	return i, err
 }
 
 const getLawChangesBetween = `-- name: GetLawChangesBetween :many
-SELECT id, created_at, updated_at, explanation, law_id_old, law_id_new, sub_law_id_old, sub_law_id_new
+SELECT id, created_at, updated_at, explanation, law_id_old, law_id_new, sub_law_id_old, sub_law_id_new, old_text, new_text
 FROM law_changes
 WHERE law_id_old = $1 AND law_id_new = $2
 ORDER BY created_at DESC
@@ -122,6 +145,8 @@ func (q *Queries) GetLawChangesBetween(ctx context.Context, arg GetLawChangesBet
 			&i.LawIDNew,
 			&i.SubLawIDOld,
 			&i.SubLawIDNew,
+			&i.OldText,
+			&i.NewText,
 		); err != nil {
 			return nil, err
 		}
@@ -137,7 +162,7 @@ func (q *Queries) GetLawChangesBetween(ctx context.Context, arg GetLawChangesBet
 }
 
 const listLawChangesByLaw = `-- name: ListLawChangesByLaw :many
-SELECT id, created_at, updated_at, explanation, law_id_old, law_id_new, sub_law_id_old, sub_law_id_new
+SELECT id, created_at, updated_at, explanation, law_id_old, law_id_new, sub_law_id_old, sub_law_id_new, old_text, new_text
 FROM law_changes
 WHERE law_id_old = $1 OR law_id_new = $1
 ORDER BY created_at DESC
@@ -161,6 +186,8 @@ func (q *Queries) ListLawChangesByLaw(ctx context.Context, lawIDOld uuid.UUID) (
 			&i.LawIDNew,
 			&i.SubLawIDOld,
 			&i.SubLawIDNew,
+			&i.OldText,
+			&i.NewText,
 		); err != nil {
 			return nil, err
 		}
@@ -176,7 +203,7 @@ func (q *Queries) ListLawChangesByLaw(ctx context.Context, lawIDOld uuid.UUID) (
 }
 
 const listLawChangesBySublaw = `-- name: ListLawChangesBySublaw :many
-SELECT id, created_at, updated_at, explanation, law_id_old, law_id_new, sub_law_id_old, sub_law_id_new
+SELECT id, created_at, updated_at, explanation, law_id_old, law_id_new, sub_law_id_old, sub_law_id_new, old_text, new_text
 FROM law_changes
 WHERE sub_law_id_old = $1 OR sub_law_id_new = $1
 ORDER BY created_at DESC
@@ -200,6 +227,8 @@ func (q *Queries) ListLawChangesBySublaw(ctx context.Context, subLawIDOld uuid.U
 			&i.LawIDNew,
 			&i.SubLawIDOld,
 			&i.SubLawIDNew,
+			&i.OldText,
+			&i.NewText,
 		); err != nil {
 			return nil, err
 		}
