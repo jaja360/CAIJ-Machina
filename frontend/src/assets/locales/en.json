@@ -1,87 +1,232 @@
 {
   "app": {
-    "name": "LexWatch",
-    "tagline": "Just-in-time legal intelligence"
+    "name": "LexVeille",
+    "domain": "Agri & health law",
+    "domainFull": "Agricultural & health law"
   },
   "nav": {
-    "home": "Home",
-    "dashboard": "Dashboard",
-    "sources": "Sources",
-    "settings": "Settings"
-  },
-  "home": {
-    "hero": {
-      "title": "Stay ahead of legal and regulatory changes",
-      "subtitle": "AI-powered monitoring that tells you what changed, why it matters, and who is affected — in real time.",
-      "cta": "Go to Dashboard"
+    "sections": { "veille": "Monitoring", "gestion": "Management" },
+    "items": {
+      "dashboard": "Dashboard",
+      "alertes": "Alerts",
+      "contrats": "Contract templates",
+      "clients": "Clients",
+      "historique": "History"
     },
-    "features": {
-      "monitoring": {
-        "title": "Automated Monitoring",
-        "description": "Continuously tracks legislation, regulations, and platform terms of service."
-      },
-      "analysis": {
-        "title": "AI-Powered Analysis",
-        "description": "LLMs contextualize each change and highlight what matters for your industry."
-      },
-      "alerts": {
-        "title": "Smart Alerts",
-        "description": "Receive targeted alerts based on your sectors and clients."
-      }
-    }
+    "settings": "Settings",
+    "collapse": "Collapse",
+    "expand": "Expand"
+  },
+  "agent": {
+    "name": "LexVeille Assistant",
+    "defaultStatus": "Active · full access",
+    "collapse": "Collapse",
+    "open": "Open assistant",
+    "placeholder": "Ask a question…"
   },
   "dashboard": {
-    "title": "Dashboard",
-    "subtitle": "Latest legal and regulatory updates",
-    "filters": {
-      "all": "All",
-      "category": "Category",
-      "urgency": "Urgency",
-      "source": "Source",
-      "dateRange": "Date range"
+    "greeting": "Hello, {{name}}",
+    "subtitle": "{{count}} active alerts",
+    "kpi": {
+      "active": "High alerts",
+      "critical": "Critical",
+      "thisWeek": "+{{count}} this week",
+      "exposed": "{{count}} exposed clients",
+      "deadline": "{{date}} – deadline",
+      "thisMonth": "+{{count}} this month"
     },
-    "empty": "No updates match your filters.",
-    "loading": "Loading updates..."
-  },
-  "update": {
-    "urgency": {
-      "high": "High",
-      "medium": "Medium",
-      "low": "Low"
-    },
-    "category": {
-      "legislation": "Legislation",
-      "regulation": "Regulation",
-      "compliance": "Compliance",
-      "platform": "Platform",
-      "jurisprudence": "Jurisprudence"
-    },
-    "labels": {
-      "publishedAt": "Published",
-      "detectedAt": "Detected",
-      "source": "Source",
-      "affectedSectors": "Affected sectors",
-      "keyChanges": "Key changes",
-      "jurisdiction": "Jurisdiction",
-      "readMore": "Read source"
+    "sections": {
+      "critical": "Critical alerts",
+      "high": "High alerts"
     }
   },
-  "sources": {
-    "title": "Monitored Sources",
-    "add": "Add source",
-    "active": "Active",
-    "inactive": "Inactive",
-    "lastChecked": "Last checked",
-    "empty": "No sources configured."
+  "alert": {
+    "severity": { "critical": "Critical", "high": "High" },
+    "impact": { "high": "High impact", "medium": "Moderate impact" },
+    "stats": {
+      "modifications": "Modifications",
+      "contracts": "Contracts",
+      "clients": "Clients",
+      "deadline": "Deadline"
+    },
+    "sections": { "modifications": "Detected modifications — article by article" },
+    "labels": { "contracts": "Contracts:" },
+    "actions": {
+      "export": "Export",
+      "viewContracts": "View contracts",
+      "openContract": "Open a contract"
+    },
+    "back": "Back to dashboard",
+    "footer": "{{contracts}} contracts to revise · {{clients}} clients to notify · Deadline:"
+  },
+  "contract": {
+    "labels": {
+      "clausesToModify": "{{count}} clauses to modify",
+      "signed": "Signed on {{date}}",
+      "actionRequired": "Action required before {{date}}",
+      "clausesTitle": "Current clauses — to modify",
+      "actionsTitle": "Actions to take",
+      "newText": "New text",
+      "addClause": "Clause to add",
+      "legalNote": "Legal note",
+      "nextLabel": "Next contract: {{label}}"
+    },
+    "chip": { "urgent": "Urgent", "toRevise": "To revise" },
+    "actions": {
+      "exportAmendment": "Export amendment",
+      "notify": "Notify client",
+      "next": "Next contract"
+    },
+    "back": "ARLA glyphosate — affected contracts"
+  },
+  "notify": {
+    "steps": {
+      "1": "Alert detected",
+      "2": "Modifications analysed",
+      "3": "Contract revised",
+      "4": "Notify client",
+      "5": "Archive"
+    },
+    "sections": {
+      "client": "Client",
+      "attachment": "Attachment",
+      "email": "Client message — AI-drafted, please review"
+    },
+    "email": {
+      "to": "To",
+      "cc": "Cc",
+      "subject": "Subject",
+      "aiDisclaimer": "AI-drafted — verify before sending",
+      "edit": "Edit",
+      "send": "Send",
+      "sent": "Sent",
+      "preview": "Preview"
+    },
+    "attachment": { "meta": "Generated · {{count}} modified clauses · to sign" },
+    "chip": { "urgent": "Urgent action" },
+    "footer": {
+      "sent": "✓ Email sent.",
+      "remaining": "After sending: {{count}} other clients still to notify for this alert",
+      "nextClient": "Next client"
+    },
+    "back": "Contract {{id}}"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Configure monitoring, alerts, and files",
+    "navSections": { "veille": "Monitoring", "alertes": "Alerts", "dossiers": "Files" },
+    "tabs": {
+      "domains": "Domains",
+      "keywords": "Keywords",
+      "sources": "Sources",
+      "levels": "Levels",
+      "freq": "Frequency",
+      "notifs": "Notifications",
+      "clients": "Clients",
+      "contracts": "Contracts"
+    },
+    "domains": {
+      "title": "Monitoring domains",
+      "description": "Select the legal domains to monitor. Alerts will be filtered based on these choices.",
+      "header": "Active domains",
+      "count": "{{active}} of {{total}} enabled"
+    },
+    "keywords": {
+      "title": "Monitoring keywords",
+      "description": "Terms analysed across all connected sources to generate alerts.",
+      "header": "Active keywords",
+      "count": "{{count}} terms",
+      "add": "+ Add a term"
+    },
+    "alertConfig": {
+      "title": "Alert configuration",
+      "description": "Frequency, levels and notification channels.",
+      "freqHeader": "Frequency",
+      "notifsHeader": "Notifications",
+      "freq": {
+        "rt":   { "label": "Real-time",        "sub": "Alert on detection"    },
+        "day":  { "label": "Daily digest",     "sub": "Every morning at 8am"  },
+        "week": { "label": "Weekly digest",    "sub": "Every Monday"          }
+      },
+      "notifs": {
+        "mail":   { "label": "Email",              "sub": "{{email}}"             },
+        "mobile": { "label": "Mobile notification", "sub": "LexVeille app"         },
+        "slack":  { "label": "Slack",              "sub": "Not configured"        },
+        "teams":  { "label": "Microsoft Teams",    "sub": "Not configured"        }
+      }
+    },
+    "sources": {
+      "title": "Monitoring sources",
+      "description": "Official databases and RSS feeds analysed automatically.",
+      "header": "Active sources",
+      "count": "{{active}} of {{total}}",
+      "active": "Active",
+      "inactive": "Inactive",
+      "add": "Add a source (URL, RSS or official feed)"
+    },
+    "clients": {
+      "title": "Clients & files",
+      "description": "Imported contracts are automatically analysed with each new alert.",
+      "header": "Active clients",
+      "count": "{{count}} contracts",
+      "manage": "Manage",
+      "add": "+ Add",
+      "import": "Import contracts (.pdf, .docx) — automatically analysed"
+    },
+    "footer": {
+      "unsaved": "Unsaved changes",
+      "cancel": "Cancel",
+      "save": "Save settings"
+    }
+  },
+  "onboarding": {
+    "skip": "Skip for now",
+    "title": "Set up your monitoring",
+    "subtitle": "Configure your domains, keywords and sources in 3 steps.",
+    "stepLabel": "Step {{current}} of {{total}}",
+    "steps": {
+      "1": { "name": "Domains & keywords", "sub": "Legal monitoring axes"    },
+      "2": { "name": "Data sources",       "sub": "Official feeds & RSS"     },
+      "3": { "name": "Clients & alerts",   "sub": "Files and notifications"  }
+    },
+    "titles": {
+      "1": "Choose your monitoring domains",
+      "2": "Select your data sources",
+      "3": "Import your clients and configure alerts"
+    },
+    "keywordsLabel": "Monitoring keywords",
+    "keywordsAdd": "+ Add a term",
+    "upload": {
+      "title": "Import your existing contracts",
+      "subtitle": "Accepted formats: .pdf, .docx — automatic AI analysis",
+      "browse": "Browse files"
+    },
+    "alertsBy": "Receive alerts by",
+    "channel": {
+      "email": "Email",
+      "mobile": "Mobile",
+      "slack": "Slack",
+      "teams": "Teams"
+    },
+    "prev": "Previous",
+    "next": "Continue",
+    "finish": "Finish setup",
+    "trust": {
+      "canlii": "CanLII certified",
+      "journals": "Official journals",
+      "gov": "Government sources"
+    }
+  },
+  "history": {
+    "title": "History",
+    "subtitle": "All alerts processed over the last 90 days",
+    "comingSoon": "Coming soon",
+    "description": "This section will list your archived alerts, their resolution, and the associated amendment or email.",
+    "back": "← Back to dashboard"
   },
   "common": {
     "loading": "Loading…",
     "error": "An error occurred. Please try again.",
-    "retry": "Retry",
-    "close": "Close",
-    "save": "Save",
-    "cancel": "Cancel",
-    "search": "Search…",
-    "noResults": "No results found."
+    "retry": "Retry"
   }
 }
