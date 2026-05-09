@@ -28,8 +28,9 @@
     "greeting": "Bonjour, {{name}}",
     "subtitle": "{{count}} alertes actives",
     "kpi": {
-      "active": "Alertes élevées",
+      "active": "Alertes Modérées",
       "critical": "Critiques",
+      "low": "Alertes Faibles",
       "thisWeek": "+{{count}} cette semaine",
       "exposed": "{{count}} clients exposés",
       "deadline": "{{date}} – délai",
@@ -37,11 +38,12 @@
     },
     "sections": {
       "critical": "Alertes critiques",
-      "high": "Alertes élevées"
+      "high": "Alertes Modérées",
+      "low": "Alertes Faibles"
     }
   },
   "alert": {
-    "severity": { "critical": "Critique", "high": "Élevé" },
+    "severity": { "critical": "Critique", "high": "Modéré", "medium": "Modéré", "low": "Faible" },
     "impact": { "high": "Impact élevé", "medium": "Impact modéré" },
     "stats": {
       "modifications": "Modifications",
@@ -50,7 +52,7 @@
       "deadline": "Délai"
     },
     "sections": { "modifications": "Modifications détectées — article par article" },
-    "labels": { "contracts": "Contrats :" },
+    "labels": { "contracts": "Clients :" },
     "actions": {
       "export": "Exporter",
       "viewContracts": "Voir les contrats",
@@ -58,6 +60,19 @@
     },
     "back": "Retour au tableau de bord",
     "footer": "{{contracts}} contrats à réviser · {{clients}} clients à notifier · Délai :"
+  },
+  "contrats": {
+    "clientsLabel": "Clients",
+    "modelsLabel": "Modèles associés",
+    "noModels": "Aucun modèle pour ce client.",
+    "status": {
+      "urgent": "Urgent",
+      "to-revise": "À réviser",
+      "ok": "À jour"
+    },
+    "deadline": "Délai : {{date}}",
+    "clauses": "{{count}} clause(s) à modifier",
+    "openModel": "Ouvrir"
   },
   "contract": {
     "labels": {
@@ -77,7 +92,7 @@
       "notify": "Notifier le client",
       "next": "Contrat suivant"
     },
-    "back": "ARLA glyphosate — contrats affectés"
+    "back": "← Modèles de contrats"
   },
   "notify": {
     "steps": {
@@ -162,7 +177,14 @@
       "count": "{{active}} sur {{total}}",
       "active": "Actif",
       "inactive": "Inactif",
-      "add": "Ajouter une source (URL, RSS ou flux officiel)"
+      "add": "Ajouter une source (URL, RSS ou flux officiel)",
+      "internalHeader": "Sources externes",
+      "externalHeader": "Sources internes",
+      "apiKey": "Clé API",
+      "apiKeyPlaceholder": "Entrez votre clé API…",
+      "apiKeySet": "Clé configurée",
+      "apiKeyClear": "Effacer",
+      "addExternal": "Ajouter une source externe"
     },
     "clients": {
       "title": "Clients & dossiers",

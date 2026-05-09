@@ -29,6 +29,7 @@ export default function AlertesPage() {
 
   const critical = alerts.filter((a) => a.severity === "critical");
   const high     = alerts.filter((a) => a.severity === "high");
+  const low      = alerts.filter((a) => a.severity === "low" || a.severity === "medium");
 
   return (
     <>
@@ -72,6 +73,26 @@ export default function AlertesPage() {
             </SectionLabel>
             <div className="flex flex-col gap-2">
               {high.map((a) => (
+                <AlertCard key={a.id} alert={a} onClick={() => router.push(`/alertes/${a.id}`)} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {low.length > 0 && (
+          <section>
+            <SectionLabel
+              right={
+                <span className="text-[10.5px] text-ink-500 px-2 py-0.5 bg-ink-50 rounded-full ring-1 ring-ink-100">
+                  {low.length}
+                </span>
+              }
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+              {t("dashboard.sections.low")}
+            </SectionLabel>
+            <div className="flex flex-col gap-2">
+              {low.map((a) => (
                 <AlertCard key={a.id} alert={a} onClick={() => router.push(`/alertes/${a.id}`)} />
               ))}
             </div>

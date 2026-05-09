@@ -112,9 +112,11 @@ export default function DashboardPage() {
 
   const critical = alerts.filter((a) => a.severity === "critical");
   const high     = alerts.filter((a) => a.severity === "high");
+  const low      = alerts.filter((a) => a.severity === "low" || a.severity === "medium");
 
-  const visibleCritical = critical;
-  const visibleHigh     = filter === "critical" ? [] : high;
+  const visibleCritical = filter === "all" || filter === "critical" ? critical : [];
+  const visibleHigh     = filter === "all" || filter === "high"     ? high     : [];
+  const visibleLow      = filter === "all" || filter === "low"      ? low      : [];
 
   return (
     <>
@@ -134,8 +136,9 @@ export default function DashboardPage() {
       <KpiStrip
         activeFilter={filter}
         onFilter={setFilter}
-        totalCount={kpi?.alerts_24h ?? alerts.length}
         criticalCount={critical.length}
+        highCount={high.length}
+        lowCount={low.length}
       />
 
       <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-6">
@@ -171,6 +174,26 @@ export default function DashboardPage() {
             </SectionLabel>
             <div className="flex flex-col gap-2">
               {visibleHigh.map((a) => (
+                <AlertCard key={a.id} alert={a} onClick={() => router.push(`/alertes/${a.id}`)} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {visibleLow.length > 0 && (
+          <section>
+            <SectionLabel
+              right={
+                <span className="text-[10.5px] text-ink-500 px-2 py-0.5 bg-ink-50 rounded-full ring-1 ring-ink-100">
+                  {visibleLow.length}
+                </span>
+              }
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+              {t("dashboard.sections.low")}
+            </SectionLabel>
+            <div className="flex flex-col gap-2">
+              {visibleLow.map((a) => (
                 <AlertCard key={a.id} alert={a} onClick={() => router.push(`/alertes/${a.id}`)} />
               ))}
             </div>

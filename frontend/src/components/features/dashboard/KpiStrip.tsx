@@ -3,16 +3,17 @@
 import { Icon } from "@/components/ui/Icon";
 import { useLanguage } from "@/context/LanguageContext";
 
-export type KpiFilter = "all" | "critical";
+export type KpiFilter = "all" | "critical" | "high" | "low";
 
 interface KpiStripProps {
   activeFilter: KpiFilter;
   onFilter: (f: KpiFilter) => void;
-  totalCount: number;
   criticalCount: number;
+  highCount: number;
+  lowCount: number;
 }
 
-export function KpiStrip({ activeFilter, onFilter, totalCount, criticalCount }: KpiStripProps) {
+export function KpiStrip({ activeFilter, onFilter, criticalCount, highCount, lowCount }: KpiStripProps) {
   const { t } = useLanguage();
 
   const items = [
@@ -27,19 +28,29 @@ export function KpiStrip({ activeFilter, onFilter, totalCount, criticalCount }: 
       activeRing: "ring-red-300 bg-red-50/40",
     },
     {
-      filter: "all" as KpiFilter,
-      value: totalCount,
+      filter: "high" as KpiFilter,
+      value: highCount,
       labelKey: "dashboard.kpi.active",
       detailKey: "dashboard.kpi.thisWeek",
       detailParams: { count: 2 },
       icon: "bell",
-      accent: "text-brand-700",
-      activeRing: "ring-brand-300 bg-brand-50/40",
+      accent: "text-orange-600",
+      activeRing: "ring-orange-300 bg-orange-50/40",
+    },
+    {
+      filter: "low" as KpiFilter,
+      value: lowCount,
+      labelKey: "dashboard.kpi.low",
+      detailKey: "dashboard.kpi.thisMonth",
+      detailParams: { count: 2 },
+      icon: "info",
+      accent: "text-blue-600",
+      activeRing: "ring-blue-300 bg-blue-50/40",
     },
   ];
 
   return (
-    <div className="px-6 pt-5 grid grid-cols-2 gap-3">
+    <div className="px-6 pt-5 grid grid-cols-3 gap-3">
       {items.map((k) => {
         const active = activeFilter === k.filter;
         return (

@@ -18,7 +18,12 @@ export function AlertBanner({ alert: a }: AlertBannerProps) {
           </span>
         </div>
         <div className="text-[18px] font-bold tracking-tight text-ink-900">{a.title}</div>
-        <div className="mt-1.5 text-[11.5px] text-ink-500 flex items-center gap-1.5">
+        {a.legislationRef && (
+          <div className="mt-1 text-[11px] font-mono text-brand-700 font-medium">
+            {a.legislationRef}
+          </div>
+        )}
+        <div className="mt-1 text-[11.5px] text-ink-500 flex items-center gap-1.5">
           <Icon name="globe" className="w-3.5 h-3.5" />
           {a.sourceFull ?? a.source}
         </div>

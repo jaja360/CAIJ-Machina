@@ -250,3 +250,43 @@ export async function apiUploadLawFile(
     body: formData,
   });
 }
+
+// ── Agent API ────────────────────────────────────────────────────────────────
+
+export interface AgentConversation {
+  id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgentMessageResponse {
+  user_message:      { id: string; speaker: string; message: string };
+  assistant_message: { id: string; speaker: string; message: string };
+  sql_query:            string;
+  sql_result_row_count: number;
+}
+
+/** Create a new agent conversation. Optional clientId scopes the conversation. */
+export async function apiCreateConversation(
+  token: string,
+  clientId?: string,
+): Promise<AgentConversation> {
+  return apiFetch<AgentConversation>("/api/agent/new", {
+    method: "POST",
+    token,
+    body: JSON.stringify({ client_id: clientId ?? "" }),
+  });
+}
+
+/** Send a message to an existing conversation. Returns the assistant reply. */
+export async function apiSendAgentMessage(
+  token: string,
+  convoId: string,
+  message: string,
+): Promise<AgentMessageResponse> {
+  return apiFetch<AgentMessageResponse>(`/api/agent/${convoId}`, {
+    method: "POST",
+    token,
+    body: JSON.stringify({ message }),
+  });
+}

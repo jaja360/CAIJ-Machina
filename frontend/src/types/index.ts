@@ -34,6 +34,8 @@ export interface AlertItem {
   domain: Domain;
   domainLabel: string;
   title: string;
+  articleRef?: string;
+  legislationRef?: string;
   source: string;
   sourceFull?: string;
   clients: number;
@@ -42,6 +44,16 @@ export interface AlertItem {
   deadline: string;
   modCount: number;
   modifications?: Modification[];
+}
+
+// ── Contract models ──────────────────────────────────────────────────────────
+export interface ContractModel {
+  id: string;
+  title: string;
+  domain: Domain;
+  status: 'ok' | 'to-revise' | 'urgent';
+  clausesToModify: number;
+  deadline?: string;
 }
 
 // ── Contracts ────────────────────────────────────────────────────────────────
@@ -97,6 +109,8 @@ export interface WatchSource {
   url: string;
   on: boolean;
   icon: string;
+  type?: 'internal' | 'external';
+  apiKey?: string;
 }
 
 export interface Client {

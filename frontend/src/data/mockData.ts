@@ -4,7 +4,7 @@
  */
 import type {
   AppUser, AlertItem, Contract, DraftEmail,
-  DomainConfig, WatchSource, Client, AgentTranscript,
+  DomainConfig, WatchSource, Client, AgentTranscript, ContractModel,
 } from '@/types';
 
 export const MOCK_USER: AppUser = {
@@ -20,7 +20,9 @@ export const MOCK_ALERTS: AlertItem[] = [
     severity: 'critical',
     domain: 'pest',
     domainLabel: 'Pesticides',
-    title: "ARLA — Retrait d'homologation du glyphosate (décision finale)",
+    title: "Loi sur les produits antiparasitaires, L.C. 2002, ch. 28 — Retrait d'homologation du glyphosate (décision finale)",
+    articleRef: 'Art. 12 & 19',
+    legislationRef: 'Loi sur les produits antiparasitaires, L.C. 2002, ch. 28',
     source: 'Pesticides · ARLA',
     sourceFull: "Agence de réglementation de la lutte antiparasitaire · 10 jan. 2025",
     clients: 6, contracts: 5,
@@ -72,8 +74,11 @@ export const MOCK_ALERTS: AlertItem[] = [
     severity: 'critical',
     domain: 'sante',
     domainLabel: 'Santé',
-    title: "Santé Canada — Nouvelles limites maximales de résidus (LMR) dans les aliments",
-    source: 'Santé · Aliments & drogues',
+    title: "Loi sur le renforcement de la protection de l'environnement pour un Canada en santé, L.C. 2023, ch. 12",
+    articleRef: 'Art. 4 & 31',
+    legislationRef: 'Loi sur le renforcement de la protection de l\'environnement pour un Canada en santé, L.C. 2023, ch. 12',
+    source: 'Santé · Lois annuelles 2023, ch. 12',
+    sourceFull: 'laws-lois.justice.gc.ca · Lois annuelles 2023, ch. 12',
     clients: 4, contracts: 3,
     time: 'Il y a 3h',
     deadline: '28 fév. 2025',
@@ -85,6 +90,7 @@ export const MOCK_ALERTS: AlertItem[] = [
     domain: 'agri',
     domainLabel: 'Agriculture',
     title: "Loi sur les semences — Amendement obligations de traçabilité OGM",
+    articleRef: 'Art. 7',
     source: 'Agriculture · ACIA',
     clients: 5, contracts: 4,
     time: 'Hier',
@@ -97,6 +103,7 @@ export const MOCK_ALERTS: AlertItem[] = [
     domain: 'pest',
     domainLabel: 'Pesticides',
     title: "PMRA — Mise à jour conditions d'utilisation des néonicotinoïdes",
+    articleRef: 'Art. 8 & 22',
     source: 'Pesticides · PMRA',
     clients: 3, contracts: 2,
     time: 'Hier',
@@ -109,13 +116,63 @@ export const MOCK_ALERTS: AlertItem[] = [
     domain: 'agri',
     domainLabel: 'Agriculture',
     title: "Règlement sur les engrais — Nouvelles normes de composition azotée",
+    articleRef: 'Art. 3',
     source: 'Agriculture · AAC',
     clients: 2, contracts: 1,
     time: '3 jan.',
     deadline: '30 avril 2025',
     modCount: 1,
   },
+  {
+    id: 'ceta-import',
+    severity: 'low',
+    domain: 'comm',
+    domainLabel: 'Commerce',
+    title: "AECG/CETA — Mise à jour des contingents tarifaires agricoles 2025",
+    articleRef: 'Annexe 2-A',
+    source: 'Commerce · Affaires mondiales Canada',
+    clients: 1, contracts: 1,
+    time: '2 jan.',
+    deadline: '30 juin 2025',
+    modCount: 1,
+  },
+  {
+    id: 'env-eau',
+    severity: 'low',
+    domain: 'env',
+    domainLabel: 'Environnement',
+    title: "Loi sur les ressources en eau — Nouvelles exigences de déclaration des prélèvements agricoles",
+    articleRef: 'Art. 14',
+    source: 'Environnement · ECCC',
+    clients: 2, contracts: 2,
+    time: '15 déc.',
+    deadline: '1 juil. 2025',
+    modCount: 1,
+  },
 ];
+
+export const MOCK_CLIENT_MODELS: Record<string, ContractModel[]> = {
+  PB: [
+    { id: 'LXV-BEA-2023-047', title: "Contrat de fourniture d'herbicides — Ferme Beausoleil inc.", domain: 'pest', status: 'urgent',    clausesToModify: 2, deadline: '15 fév. 2025' },
+    { id: 'LXV-BEA-2022-031', title: "Contrat de services agronomiques — saison 2022-2024",       domain: 'agri', status: 'to-revise', clausesToModify: 1, deadline: '01 mars 2025' },
+    { id: 'LXV-BEA-2021-009', title: "Accord de confidentialité — Ferme Beausoleil inc.",          domain: 'agri', status: 'ok',        clausesToModify: 0 },
+  ],
+  CA: [
+    { id: 'LXV-AGR-2022-031', title: "Contrat de distribution de produits phytosanitaires",        domain: 'pest', status: 'urgent',    clausesToModify: 1, deadline: '15 fév. 2025' },
+    { id: 'LXV-AGR-2023-014', title: "Convention d'approvisionnement en semences certifiées",      domain: 'agri', status: 'ok',        clausesToModify: 0 },
+  ],
+  SL: [
+    { id: 'LXV-SEM-2023-005', title: "Contrat de licence OGM — Semences Laurentides inc.",         domain: 'agri', status: 'to-revise', clausesToModify: 1, deadline: '01 mars 2025' },
+  ],
+  AV: [
+    { id: 'LXV-AGR-2022-018', title: "Contrat de conseil agronomique — AgroServices Vallée",       domain: 'agri', status: 'to-revise', clausesToModify: 1, deadline: '28 fév. 2025' },
+    { id: 'LXV-AGR-2021-044', title: "Contrat de prestations de services techniques",              domain: 'agri', status: 'ok',        clausesToModify: 0 },
+  ],
+  DS: [
+    { id: 'LXV-DSF-2023-005', title: "Contrat de bail agricole — Domaine St-François",             domain: 'agri', status: 'to-revise', clausesToModify: 1, deadline: '28 fév. 2025' },
+    { id: 'LXV-DSF-2022-017', title: "Contrat de fourniture d'intrants biologiques",               domain: 'sante', status: 'ok',       clausesToModify: 0 },
+  ],
+};
 
 export const MOCK_CONTRACT: Contract = {
   id: 'LXV-BEA-2023-047',
@@ -249,12 +306,12 @@ export const MOCK_KEYWORDS = [
 ];
 
 export const MOCK_SOURCES: WatchSource[] = [
-  { name: "ARLA — Décisions d'homologation",    url: 'canada.ca/fr/sante-canada/antiparasitaires', on: true,  icon: 'building' },
-  { name: "Santé Canada — Gazette officielle",   url: 'gazette.gc.ca/rp-pr/p2/index.html',          on: true,  icon: 'building' },
-  { name: "ACIA — Avis réglementaires",          url: 'inspection.canada.ca/fr/avis',               on: true,  icon: 'building' },
-  { name: "CanLII — Jurisprudence agricole",     url: 'canlii.org/fr',                              on: true,  icon: 'shield'   },
-  { name: "Agriculture et Agroalimentaire Canada", url: 'agr.gc.ca/fra/politiques-agricoles',       on: true,  icon: 'building' },
-  { name: "Journal of Pesticide Science — RSS",  url: 'springer.com/journal/10340/rss',             on: false, icon: 'rss'      },
+  { name: "ARLA — Décisions d'homologation",      url: 'canada.ca/fr/sante-canada/antiparasitaires', on: true,  icon: 'building', type: 'internal' },
+  { name: "Santé Canada — Gazette officielle",    url: 'gazette.gc.ca/rp-pr/p2/index.html',          on: true,  icon: 'building', type: 'internal' },
+  { name: "ACIA — Avis réglementaires",           url: 'inspection.canada.ca/fr/avis',               on: true,  icon: 'building', type: 'internal' },
+  { name: "CanLII — Jurisprudence agricole",      url: 'canlii.org/fr',                              on: true,  icon: 'shield',   type: 'internal' },
+  { name: "Agriculture et Agroalimentaire Canada", url: 'agr.gc.ca/fra/politiques-agricoles',        on: true,  icon: 'building', type: 'internal' },
+  { name: "Modèles de contrats",   url: 'springer.com/journal/10340/rss',             on: false, icon: 'rss',      type: 'external' }
 ];
 
 export const MOCK_CLIENTS: Client[] = [
@@ -275,7 +332,7 @@ export const MOCK_TRANSCRIPTS: Record<string, AgentTranscript> = {
       { label: 'Rédiger courriel',    icon: 'send'   },
     ],
     messages: [
-      { role: 'agent', time: '08:02', content: "Bonjour Maître Tremblay. Ce matin, <strong>2 alertes critiques</strong> touchent <strong>8 de vos clients</strong>. Voulez-vous un résumé des actions prioritaires ?" },
+      { role: 'agent', time: '08:02', content: "Bonjour {{userName}}. Ce matin, <strong>2 alertes critiques</strong> touchent <strong>8 de vos clients</strong>. Voulez-vous un résumé des actions prioritaires ?" },
       { role: 'user',  time: '08:14', content: "Oui, quels clients sont les plus urgents ?" },
       { role: 'agent', time: '08:14', content: "Les 2 clients les plus exposés avec des délais imminents :",
         results: [

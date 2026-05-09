@@ -7,7 +7,7 @@ import { useAgent } from "@/context/AgentContext";
 import { useLanguage } from "@/context/LanguageContext";
 
 export function AgentPanel() {
-  const { messages, status, quickActions, isCollapsed, setCollapsed, sendMessage } = useAgent();
+  const { messages, status, quickActions, isCollapsed, isThinking, setCollapsed, sendMessage } = useAgent();
   const { t } = useLanguage();
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -71,6 +71,22 @@ export function AgentPanel() {
       {/* Chat messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-2.5">
         {messages.map((m, i) => <Message key={i} {...m} />)}
+        {isThinking && (
+          <div className="flex items-center gap-2 px-3 py-2">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-500 to-brand-800 grid place-items-center text-white shrink-0">
+              <Icon name="sparkles" className="w-3 h-3" strokeWidth={2} />
+            </div>
+            <div className="flex items-center gap-1">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="w-1.5 h-1.5 rounded-full bg-ink-400 animate-pulse-dot"
+                  style={{ animationDelay: `${i * 0.2}s` }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Quick actions */}
