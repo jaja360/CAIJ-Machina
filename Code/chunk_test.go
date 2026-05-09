@@ -6,12 +6,15 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestChunkHTMLLegislationParsesRecords(t *testing.T) {
 	htmlContent := `<!doctype html>
 <html>
 <head>
+  <!-- last modification date : April 9, 2026, 3:29:33 AM EDT -->
+  <!-- update date : April 9, 2026, 8:03:10 AM EDT -->
   <title>R.S.O. 1990, c. E.1 | Example Act</title>
   <script id="caijtdm">[{"anchor":"sec1","sectionNumber":"1.","paragraphNumber":"","marginalNote":"Purpose"}]</script>
 </head>
@@ -37,6 +40,12 @@ func TestChunkHTMLLegislationParsesRecords(t *testing.T) {
 	}
 	if document.Citation != "R.S.O. 1990, c. E.1" {
 		t.Errorf("expected citation R.S.O. 1990, c. E.1, got %q", document.Citation)
+	}
+	if document.DatePlaced == nil {
+		t.Fatal("expected date placed to be parsed")
+	}
+	if document.DateReplaced == nil {
+		t.Fatal("expected date replaced to be parsed")
 	}
 	if document.RecordCount != 2 {
 		t.Fatalf("expected 2 records, got %d", document.RecordCount)
@@ -73,6 +82,26 @@ func TestChunkHTMLLegislationMissingOriginalDocument(t *testing.T) {
 	_, err := (*apiConfig)(nil).ChunkHTMLLegislation(context.Background(), "missing.html", `<html><body></body></html>`, ChunkOptions{})
 	if err == nil {
 		t.Fatal("expected error for missing originalDocument div")
+	}
+}
+
+func TestParseChunkLawDates(t *testing.T) {
+	datePlaced, dateReplaced, err := parseChunkLawDates(`
+<!-- last modification date : April 9, 2026, 3:29:33 AM EDT -->
+<!-- update date : April 9, 2026, 8:03:10 AM EDT -->`)
+	if err != nil {
+		t.Fatalf("parseChunkLawDates returned error: %v", err)
+	}
+	if datePlaced == nil || dateReplaced == nil {
+		t.Fatal("expected both dates to be parsed")
+	}
+	placedWant := time.Date(2026, time.April, 9, 8, 3, 10, 0, datePlaced.Location())
+	replacedWant := time.Date(2026, time.April, 9, 3, 29, 33, 0, dateReplaced.Location())
+	if !datePlaced.Equal(placedWant) {
+		t.Errorf("expected datePlaced %v, got %v", placedWant, datePlaced)
+	}
+	if !dateReplaced.Equal(replacedWant) {
+		t.Errorf("expected dateReplaced %v, got %v", replacedWant, dateReplaced)
 	}
 }
 

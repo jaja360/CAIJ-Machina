@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,10 +10,13 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/jaja360/CAIJ-Machina/internal/database"
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/responses"
 	"github.com/openai/openai-go/v3/shared"
@@ -30,6 +34,8 @@ var (
 	chunkTitleRE               = regexp.MustCompile(`(?is)<title>(.*?)</title>`)
 	chunkMetadataScriptRE      = regexp.MustCompile(`(?is)<script[^>]*id=["']` + chunkMetadataScriptID + `["'][^>]*>(.*?)</script>`)
 	chunkStartDivOriginalDocRE = regexp.MustCompile(`(?is)<div\b[^>]*id=["']` + chunkOriginalDocument + `["'][^>]*>`)
+	chunkLastModifiedDateRE    = regexp.MustCompile(`(?is)<!--\s*last modification date\s*:\s*(.*?)\s*-->`)
+	chunkUpdateDateRE          = regexp.MustCompile(`(?is)<!--\s*update date\s*:\s*(.*?)\s*-->`)
 	chunkTagRE                 = regexp.MustCompile(`(?is)<[^>]+>`)
 	chunkAttrRE                = regexp.MustCompile(`([a-zA-Z_:][a-zA-Z0-9_:\-]*)\s*=\s*["']([^"']*)["']`)
 	chunkAbbreviations         = []string{"R.S.O.", "S.O.", "c.", "s.", "ss.", "Sched.", "No.", "Inc.", "Ltd."}
@@ -86,6 +92,8 @@ type ChunkDocument struct {
 	SourceFile     string        `json:"source_file"`
 	DocumentTitle  string        `json:"document_title"`
 	Citation       string        `json:"citation"`
+	DatePlaced     *time.Time    `json:"date_placed,omitempty"`
+	DateReplaced   *time.Time    `json:"date_replaced,omitempty"`
 	RecordCount    int           `json:"record_count"`
 	DomainModel    string        `json:"domain_model,omitempty"`
 	EmbeddingModel string        `json:"embedding_model,omitempty"`
@@ -195,6 +203,28 @@ func (cfg *apiConfig) ChunkHTMLLegislationFile(ctx context.Context, path string,
 	return cfg.ChunkHTMLLegislation(ctx, filepath.Base(path), string(content), opts)
 }
 
+func (cfg *apiConfig) IngestHTMLLegislation(ctx context.Context, sourceFile, htmlContent string, opts ChunkOptions) (ChunkDocument, error) {
+	if cfg == nil || cfg.db == nil {
+		return ChunkDocument{}, errors.New("apiConfig with db is required for ingestion")
+	}
+	document, err := cfg.ChunkHTMLLegislation(ctx, sourceFile, htmlContent, opts)
+	if err != nil {
+		return ChunkDocument{}, err
+	}
+	if err := cfg.storeChunkDocument(ctx, document); err != nil {
+		return ChunkDocument{}, err
+	}
+	return document, nil
+}
+
+func (cfg *apiConfig) IngestHTMLLegislationFile(ctx context.Context, path string, opts ChunkOptions) (ChunkDocument, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return ChunkDocument{}, err
+	}
+	return cfg.IngestHTMLLegislation(ctx, filepath.Base(path), string(content), opts)
+}
+
 func parseHTMLLegislationChunks(sourceFile, content string) (chunkParseResult, error) {
 	titleParts := parseChunkTitleParts(content)
 	citation := ""
@@ -205,6 +235,11 @@ func parseHTMLLegislationChunks(sourceFile, content string) (chunkParseResult, e
 	}
 	if len(titleParts) > 1 {
 		documentTitle = titleParts[1]
+	}
+
+	datePlaced, dateReplaced, err := parseChunkLawDates(content)
+	if err != nil {
+		return chunkParseResult{}, err
 	}
 
 	sectionMetaByAnchor, err := parseChunkSectionMetadata(content)
@@ -223,12 +258,43 @@ func parseHTMLLegislationChunks(sourceFile, content string) (chunkParseResult, e
 		SourceFile:     sourceFile,
 		DocumentTitle:  documentTitle,
 		Citation:       citation,
+		DatePlaced:     datePlaced,
+		DateReplaced:   dateReplaced,
 		RecordCount:    len(records),
 		DomainModel:    "",
 		EmbeddingModel: "",
 		Records:        records,
 	}
 	return chunkParseResult{Document: document, SectionTextByAnchor: sectionTextByAnchor}, nil
+}
+
+func parseChunkLawDates(content string) (*time.Time, *time.Time, error) {
+	datePlaced, err := parseChunkDateMatch(content, chunkUpdateDateRE)
+	if err != nil {
+		return nil, nil, err
+	}
+	dateReplaced, err := parseChunkDateMatch(content, chunkLastModifiedDateRE)
+	if err != nil {
+		return nil, nil, err
+	}
+	return datePlaced, dateReplaced, nil
+}
+
+func parseChunkDateMatch(content string, re *regexp.Regexp) (*time.Time, error) {
+	match := re.FindStringSubmatch(content)
+	if len(match) < 2 {
+		return nil, nil
+	}
+	raw := strings.NewReplacer("\u00a0", " ", "\u202f", " ").Replace(strings.TrimSpace(html.UnescapeString(match[1])))
+	raw = strings.Join(strings.Fields(raw), " ")
+	if raw == "" {
+		return nil, nil
+	}
+	parsed, err := time.Parse("January 2, 2006, 3:04:05 PM MST", raw)
+	if err != nil {
+		return nil, fmt.Errorf("parse chunk date %q: %w", raw, err)
+	}
+	return &parsed, nil
 }
 
 func parseChunkTitleParts(content string) []string {
@@ -817,4 +883,63 @@ func chunkToSet(values []string) map[string]struct{} {
 		set[value] = struct{}{}
 	}
 	return set
+}
+
+func (cfg *apiConfig) storeChunkDocument(ctx context.Context, document ChunkDocument) error {
+	law, err := cfg.db.CreateLaw(ctx, database.CreateLawParams{
+		Name:         document.DocumentTitle,
+		Citation:     document.Citation,
+		DatePlaced:   chunkNullTime(document.DatePlaced),
+		DateReplaced: chunkNullTime(document.DateReplaced),
+	})
+	if err != nil {
+		return err
+	}
+	for i, record := range document.Records {
+		embedding, err := chunkJSONText(record.Embedding)
+		if err != nil {
+			return err
+		}
+		keywords, err := chunkJSONText(record.Domains)
+		if err != nil {
+			return err
+		}
+		if err := cfg.db.CreateSublaw(ctx, database.CreateSublawParams{
+			DocumentID: law.ID,
+			Citation:   record.Citation,
+			Sequence:   chunkNullString(strconv.Itoa(i + 1)),
+			Anchor:     chunkNullString(record.SectionAnchor),
+			Text:       chunkNullString(record.Text),
+			Embedding:  embedding,
+			Keywords:   keywords,
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func chunkNullString(value string) sql.NullString {
+	if strings.TrimSpace(value) == "" {
+		return sql.NullString{}
+	}
+	return sql.NullString{String: value, Valid: true}
+}
+
+func chunkNullTime(value *time.Time) sql.NullTime {
+	if value == nil {
+		return sql.NullTime{}
+	}
+	return sql.NullTime{Time: *value, Valid: true}
+}
+
+func chunkJSONText(value any) (sql.NullString, error) {
+	bytes, err := json.Marshal(value)
+	if err != nil {
+		return sql.NullString{}, err
+	}
+	if string(bytes) == "null" || string(bytes) == "[]" {
+		return sql.NullString{}, nil
+	}
+	return sql.NullString{String: string(bytes), Valid: true}, nil
 }
