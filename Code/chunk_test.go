@@ -85,6 +85,62 @@ func TestChunkHTMLLegislationMissingOriginalDocument(t *testing.T) {
 	}
 }
 
+func TestChunkHTMLContractParsesRecords(t *testing.T) {
+	htmlContent := `<!doctype html>
+<html>
+<head>
+	<title>Exclusive Supply Agreement - Lex Veille and PDrago inc.</title>
+</head>
+<body>
+	<div class="page">
+		<h1>Exclusive Supply Agreement</h1>
+		<p class="subtitle">Between Lex Veille and PDrago inc.</p>
+		<div class="parties">
+			<p>This Exclusive Supply Agreement is entered into as of [Effective Date].</p>
+		</div>
+		<div class="section">
+			<h2>1. Purpose</h2>
+			<p>The purpose of this Agreement is to establish the terms. It applies immediately.</p>
+		</div>
+	</div>
+</body>
+</html>`
+
+	document, err := (*apiConfig)(nil).ChunkHTMLContract(context.Background(), "contract.html", htmlContent, ChunkOptions{})
+	if err != nil {
+		t.Fatalf("ChunkHTMLContract returned error: %v", err)
+	}
+
+	if document.DocumentTitle != "Exclusive Supply Agreement - Lex Veille and PDrago inc." {
+		t.Errorf("unexpected document title: %q", document.DocumentTitle)
+	}
+	if document.Citation != "Exclusive Supply Agreement - Lex Veille and PDrago inc." {
+		t.Errorf("unexpected citation: %q", document.Citation)
+	}
+	if document.RecordCount != len(document.Records) {
+		t.Errorf("record_count=%d, len(records)=%d", document.RecordCount, len(document.Records))
+	}
+	if document.RecordCount < 3 {
+		t.Fatalf("expected at least 3 records, got %d", document.RecordCount)
+	}
+
+	firstPurpose := false
+	for _, record := range document.Records {
+		if record.SectionAnchor == "sec1" && record.Text == "The purpose of this Agreement is to establish the terms." {
+			firstPurpose = true
+			if record.SectionTitle != "Purpose" {
+				t.Errorf("expected section title Purpose, got %q", record.SectionTitle)
+			}
+			if record.Tag != "section-1::purpose" {
+				t.Errorf("expected tag section-1::purpose, got %q", record.Tag)
+			}
+		}
+	}
+	if !firstPurpose {
+		t.Fatal("expected to find first sentence for section 1")
+	}
+}
+
 func TestParseChunkLawDates(t *testing.T) {
 	datePlaced, dateReplaced, err := parseChunkLawDates(`
 <!-- last modification date : April 9, 2026, 3:29:33 AM EDT -->
@@ -160,6 +216,37 @@ func TestChunkHTMLLegislationCanLIIFixtureMetadata(t *testing.T) {
 		}
 	}
 	t.Fatal("expected a chunk for section anchor s-A.01.001")
+}
+
+func TestChunkHTMLContractFixtures(t *testing.T) {
+	files, err := filepath.Glob(filepath.Join("contracts", "*.html"))
+	if err != nil {
+		t.Fatalf("failed to glob contract fixtures: %v", err)
+	}
+	if len(files) == 0 {
+		t.Skip("no contract fixtures found")
+	}
+
+	for _, path := range files {
+		t.Run(filepath.Base(path), func(t *testing.T) {
+			document, err := (*apiConfig)(nil).ChunkHTMLContractFile(context.Background(), path, ChunkOptions{})
+			if err != nil {
+				t.Fatalf("ChunkHTMLContractFile returned error: %v", err)
+			}
+			if document.DocumentTitle == "" {
+				t.Error("expected document title")
+			}
+			if document.Citation == "" {
+				t.Error("expected citation")
+			}
+			if document.RecordCount == 0 {
+				t.Fatal("expected at least one chunk record")
+			}
+			if document.RecordCount != len(document.Records) {
+				t.Errorf("record_count=%d, len(records)=%d", document.RecordCount, len(document.Records))
+			}
+		})
+	}
 }
 
 func TestSplitChunkSentencesKeepsAbbreviations(t *testing.T) {
