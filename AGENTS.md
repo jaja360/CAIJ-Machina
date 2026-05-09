@@ -12,7 +12,8 @@
 - Point d’entrée réel : `Code/main.go`; serveur HTTP sur `:8080` avec `http.NewServeMux`.
 - Style Go : utiliser `any` plutôt que `interface{}` dans le nouveau code.
 - Toujours lancer les commandes applicatives depuis `Code/` : `godotenv.Load()` n’a pas de chemin explicite et charge donc `.env` depuis le répertoire courant.
-- Variables attendues : `DB_URL`, `JWT_SECRET`, `PLATFORM`; utiliser `Code/.env.example` comme modèle et ne jamais copier de secret depuis `Code/.env`.
+- Variables attendues : `DB_URL`, `JWT_SECRET`, `AZURE_RESOURCE_NAME`, `AZURE_API_KEY`, `AZURE_API_VERSION`, `PLATFORM`; utiliser `Code/.env.example` comme modèle et ne jamais copier de secret depuis `Code/.env`.
+- `apiConfig.openaiClient` est configuré avec `openai-go/v3/azure` depuis `AZURE_RESOURCE_NAME`, `AZURE_API_KEY` et `AZURE_API_VERSION`; ne pas revenir à `OPENAI_API_KEY` sans demande explicite.
 - `PLATFORM=dev` active `POST /admin/reset`, qui vide la table `users`; hors `dev`, cette route répond `403`.
 - `/app/` sert `http.FileServer(http.Dir("."))` depuis le répertoire courant; éviter d’y placer des fichiers sensibles servis par accident.
 

@@ -58,6 +58,9 @@ S’il n’y a pas encore de `.env.example`, créez `Code/.env` manuellement ave
 ```env
 DB_URL=postgres://USER:PASSWORD@localhost:5432/caij_machina?sslmode=disable
 JWT_SECRET=remplacer-par-un-secret-local
+AZURE_RESOURCE_NAME=nom-de-la-ressource-azure-openai
+AZURE_API_KEY=remplacer-par-une-cle-azure-openai
+AZURE_API_VERSION=2025-01-01-preview
 PLATFORM=dev
 ```
 

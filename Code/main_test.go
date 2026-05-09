@@ -58,6 +58,38 @@ func TestHealthz(t *testing.T) {
 	}
 }
 
+func TestAzureOpenAIEndpoint(t *testing.T) {
+	tests := []struct {
+		name         string
+		resourceName string
+		want         string
+	}{
+		{
+			name:         "resource name",
+			resourceName: "caij-openai",
+			want:         "https://caij-openai.openai.azure.com",
+		},
+		{
+			name:         "endpoint URL",
+			resourceName: "https://caij-openai.openai.azure.com/",
+			want:         "https://caij-openai.openai.azure.com",
+		},
+		{
+			name:         "empty",
+			resourceName: "",
+			want:         "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := azureOpenAIEndpoint(tt.resourceName); got != tt.want {
+				t.Errorf("expected endpoint %q, got %q", tt.want, got)
+			}
+		})
+	}
+}
+
 func TestRespondWithJSON(t *testing.T) {
 	w := httptest.NewRecorder()
 	payload := map[string]string{"message": "hello"}

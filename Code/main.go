@@ -2,19 +2,21 @@ package main
 
 import (
 	"database/sql"
-	"net/http"
 	"fmt"
+	"net/http"
 	"os"
 
-	_ "github.com/lib/pq"
-	"github.com/joho/godotenv"
 	"github.com/jaja360/CAIJ-Machina/internal/database"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
+	"github.com/openai/openai-go/v3"
 )
 
 type apiConfig struct {
-	db *database.Queries
-	jwtSecret string
-	platform string
+	db           *database.Queries
+	openaiClient openai.Client
+	jwtSecret    string
+	platform     string
 }
 
 func healthz(w http.ResponseWriter, r *http.Request) {
@@ -33,9 +35,10 @@ func main() {
 	defer db.Close()
 
 	cfg := &apiConfig{
-		db: database.New(db),
-		jwtSecret: os.Getenv("JWT_SECRET"),
-		platform: os.Getenv("PLATFORM"),
+		db:           database.New(db),
+		openaiClient: newOpenAIClient(),
+		jwtSecret:    os.Getenv("JWT_SECRET"),
+		platform:     os.Getenv("PLATFORM"),
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/app/", http.StripPrefix("/app", http.FileServer(http.Dir("."))))
