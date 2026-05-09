@@ -1,6 +1,6 @@
 -- name: CreateLaw :one
-INSERT INTO laws (citation, date_placed, date_replaced)
-VALUES ($1, $2, $3)
+INSERT INTO laws (name, citation, date_placed, date_replaced)
+VALUES ($1, $2, $3, $4)
 RETURNING *;
 
 -- name: GetLaw :one
@@ -39,7 +39,7 @@ ORDER BY citation ASC;
 
 -- name: UpdateLaw :one
 UPDATE laws
-SET citation = $2, date_placed = $3, date_replaced = $4, updated_at = NOW()
+SET name = $2, citation = $3, date_placed = $4, date_replaced = $5, updated_at = NOW()
 WHERE id = $1
 RETURNING *;
 

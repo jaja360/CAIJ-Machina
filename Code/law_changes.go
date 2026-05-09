@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 
@@ -78,15 +77,4 @@ func (c *apiConfig) legalChangeExplanation(oldSublaw, newSublaw database.Sublaw)
 		anchor = newSublaw.ID.String()
 	}
 	return fmt.Sprintf("Changement détecté dans la section %s.", anchor)
-}
-
-func (c *apiConfig) latestLawByCitation(ctx context.Context, citation string) (database.Law, bool, error) {
-	law, err := c.db.GetLatestLawByCitation(ctx, citation)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return database.Law{}, false, nil
-		}
-		return database.Law{}, false, err
-	}
-	return law, true, nil
 }

@@ -95,6 +95,7 @@ type Law struct {
 	Citation     string       `json:"citation"`
 	DatePlaced   sql.NullTime `json:"date_placed"`
 	DateReplaced sql.NullTime `json:"date_replaced"`
+	Name         string       `json:"name"`
 }
 
 type LawChange struct {
@@ -106,6 +107,8 @@ type LawChange struct {
 	LawIDNew    uuid.UUID `json:"law_id_new"`
 	SubLawIDOld uuid.UUID `json:"sub_law_id_old"`
 	SubLawIDNew uuid.UUID `json:"sub_law_id_new"`
+	OldText     string    `json:"old_text"`
+	NewText     string    `json:"new_text"`
 }
 
 type RefreshToken struct {
@@ -139,6 +142,7 @@ type Sublaw struct {
 	Embedding  sql.NullString `json:"embedding"`
 	Keywords   sql.NullString `json:"keywords"`
 	DocumentID uuid.UUID      `json:"document_id"`
+	Name       sql.NullString `json:"name"`
 }
 
 type User struct {

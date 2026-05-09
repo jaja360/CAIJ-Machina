@@ -36,6 +36,7 @@ var (
 	chunkStartDivOriginalDocRE = regexp.MustCompile(`(?is)<div\b[^>]*id=["']` + chunkOriginalDocument + `["'][^>]*>`)
 	chunkLastModifiedDateRE    = regexp.MustCompile(`(?is)<!--\s*last modification date\s*:\s*(.*?)\s*-->`)
 	chunkUpdateDateRE          = regexp.MustCompile(`(?is)<!--\s*update date\s*:\s*(.*?)\s*-->`)
+	chunkMetaTagRE             = regexp.MustCompile(`(?is)<meta\b[^>]*>`)
 	chunkTagRE                 = regexp.MustCompile(`(?is)<[^>]+>`)
 	chunkAttrRE                = regexp.MustCompile(`([a-zA-Z_:][a-zA-Z0-9_:\-]*)\s*=\s*["']([^"']*)["']`)
 	chunkAbbreviations         = []string{"R.S.O.", "S.O.", "c.", "s.", "ss.", "Sched.", "No.", "Inc.", "Ltd."}
@@ -269,11 +270,23 @@ func parseHTMLLegislationChunks(sourceFile, content string) (chunkParseResult, e
 }
 
 func parseChunkLawDates(content string) (*time.Time, *time.Time, error) {
-	datePlaced, err := parseChunkDateMatch(content, chunkUpdateDateRE)
+	datePlaced, err := parseChunkMetaDate(content, "entryIntoForceDate")
 	if err != nil {
 		return nil, nil, err
 	}
-	dateReplaced, err := parseChunkDateMatch(content, chunkLastModifiedDateRE)
+	dateReplaced, err := parseChunkMetaDate(content, "endInForceDate")
+	if err != nil {
+		return nil, nil, err
+	}
+	if datePlaced != nil || dateReplaced != nil {
+		return datePlaced, dateReplaced, nil
+	}
+
+	datePlaced, err = parseChunkDateMatch(content, chunkUpdateDateRE)
+	if err != nil {
+		return nil, nil, err
+	}
+	dateReplaced, err = parseChunkDateMatch(content, chunkLastModifiedDateRE)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -295,6 +308,41 @@ func parseChunkDateMatch(content string, re *regexp.Regexp) (*time.Time, error) 
 		return nil, fmt.Errorf("parse chunk date %q: %w", raw, err)
 	}
 	return &parsed, nil
+}
+
+func parseChunkMetaDate(content, metaName string) (*time.Time, error) {
+	value := parseChunkMetaContent(content, metaName)
+	if value == "" {
+		return nil, nil
+	}
+	parsed, err := time.Parse(time.DateOnly, value)
+	if err != nil {
+		return nil, fmt.Errorf("parse %s %q: %w", metaName, value, err)
+	}
+	return &parsed, nil
+}
+
+func parseChunkMetaContent(content, metaName string) string {
+	for _, tag := range chunkMetaTagRE.FindAllString(content, -1) {
+		attrs := chunkAttrRE.FindAllStringSubmatch(tag, -1)
+		name := ""
+		value := ""
+		for _, attr := range attrs {
+			if len(attr) < 3 {
+				continue
+			}
+			switch strings.ToLower(attr[1]) {
+			case "name":
+				name = strings.TrimSpace(attr[2])
+			case "content":
+				value = strings.TrimSpace(html.UnescapeString(attr[2]))
+			}
+		}
+		if name == metaName {
+			return value
+		}
+	}
+	return ""
 }
 
 func parseChunkTitleParts(content string) []string {
@@ -887,6 +935,7 @@ func chunkToSet(values []string) map[string]struct{} {
 
 func (cfg *apiConfig) storeChunkDocument(ctx context.Context, document ChunkDocument) (database.Law, []database.Sublaw, error) {
 	law, err := cfg.db.CreateLaw(ctx, database.CreateLawParams{
+		Name:         document.DocumentTitle,
 		Citation:     document.Citation,
 		DatePlaced:   chunkNullTime(document.DatePlaced),
 		DateReplaced: chunkNullTime(document.DateReplaced),
@@ -905,6 +954,7 @@ func (cfg *apiConfig) storeChunkDocument(ctx context.Context, document ChunkDocu
 			return database.Law{}, nil, err
 		}
 		sublaw, err := cfg.db.CreateSublaw(ctx, database.CreateSublawParams{
+			Name:       chunkNullString(rewriteSublawName(document, record)),
 			Citation:   record.Citation,
 			Sequence:   chunkNullString(strconv.Itoa(i + 1)),
 			Anchor:     chunkNullString(record.SectionAnchor),
@@ -919,6 +969,23 @@ func (cfg *apiConfig) storeChunkDocument(ctx context.Context, document ChunkDocu
 		sublaws = append(sublaws, sublaw)
 	}
 	return law, sublaws, nil
+}
+
+func rewriteSublawName(document ChunkDocument, record ChunkRecord) string {
+	parts := make([]string, 0, 3)
+	if strings.TrimSpace(document.DocumentTitle) != "" {
+		parts = append(parts, strings.TrimSpace(document.DocumentTitle))
+	}
+	if strings.TrimSpace(record.SectionNumber) != "" {
+		parts = append(parts, "section "+strings.TrimSpace(strings.TrimSuffix(record.SectionNumber, ".")))
+	}
+	if strings.TrimSpace(record.SectionTitle) != "" {
+		parts = append(parts, strings.TrimSpace(record.SectionTitle))
+	}
+	if len(parts) == 0 {
+		return strings.TrimSpace(record.Citation)
+	}
+	return strings.Join(parts, " - ")
 }
 
 func chunkNullString(value string) sql.NullString {

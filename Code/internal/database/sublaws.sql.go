@@ -13,12 +13,13 @@ import (
 )
 
 const createSublaw = `-- name: CreateSublaw :one
-INSERT INTO sublaws (citation, sequence, anchor, content, embedding, keywords, document_id)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, created_at, updated_at, citation, sequence, anchor, content, embedding, keywords, document_id
+INSERT INTO sublaws (name, citation, sequence, anchor, content, embedding, keywords, document_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING id, created_at, updated_at, citation, sequence, anchor, content, embedding, keywords, document_id, name
 `
 
 type CreateSublawParams struct {
+	Name       sql.NullString `json:"name"`
 	Citation   string         `json:"citation"`
 	Sequence   sql.NullString `json:"sequence"`
 	Anchor     sql.NullString `json:"anchor"`
@@ -30,6 +31,7 @@ type CreateSublawParams struct {
 
 func (q *Queries) CreateSublaw(ctx context.Context, arg CreateSublawParams) (Sublaw, error) {
 	row := q.db.QueryRowContext(ctx, createSublaw,
+		arg.Name,
 		arg.Citation,
 		arg.Sequence,
 		arg.Anchor,
@@ -50,6 +52,7 @@ func (q *Queries) CreateSublaw(ctx context.Context, arg CreateSublawParams) (Sub
 		&i.Embedding,
 		&i.Keywords,
 		&i.DocumentID,
+		&i.Name,
 	)
 	return i, err
 }
@@ -75,7 +78,7 @@ func (q *Queries) DeleteSublawsByLaw(ctx context.Context, documentID uuid.UUID) 
 }
 
 const getSublaw = `-- name: GetSublaw :one
-SELECT id, created_at, updated_at, citation, sequence, anchor, content, embedding, keywords, document_id
+SELECT id, created_at, updated_at, citation, sequence, anchor, content, embedding, keywords, document_id, name
 FROM sublaws
 WHERE id = $1
 `
@@ -94,12 +97,13 @@ func (q *Queries) GetSublaw(ctx context.Context, id uuid.UUID) (Sublaw, error) {
 		&i.Embedding,
 		&i.Keywords,
 		&i.DocumentID,
+		&i.Name,
 	)
 	return i, err
 }
 
 const getSublawByLawAndAnchor = `-- name: GetSublawByLawAndAnchor :one
-SELECT id, created_at, updated_at, citation, sequence, anchor, content, embedding, keywords, document_id
+SELECT id, created_at, updated_at, citation, sequence, anchor, content, embedding, keywords, document_id, name
 FROM sublaws
 WHERE document_id = $1 AND anchor = $2
 `
@@ -123,12 +127,13 @@ func (q *Queries) GetSublawByLawAndAnchor(ctx context.Context, arg GetSublawByLa
 		&i.Embedding,
 		&i.Keywords,
 		&i.DocumentID,
+		&i.Name,
 	)
 	return i, err
 }
 
 const listSublawsByLaw = `-- name: ListSublawsByLaw :many
-SELECT id, created_at, updated_at, citation, sequence, anchor, content, embedding, keywords, document_id
+SELECT id, created_at, updated_at, citation, sequence, anchor, content, embedding, keywords, document_id, name
 FROM sublaws
 WHERE document_id = $1
 ORDER BY sequence ASC NULLS LAST, created_at ASC
@@ -154,6 +159,7 @@ func (q *Queries) ListSublawsByLaw(ctx context.Context, documentID uuid.UUID) ([
 			&i.Embedding,
 			&i.Keywords,
 			&i.DocumentID,
+			&i.Name,
 		); err != nil {
 			return nil, err
 		}
@@ -169,7 +175,7 @@ func (q *Queries) ListSublawsByLaw(ctx context.Context, documentID uuid.UUID) ([
 }
 
 const searchSublawsContent = `-- name: SearchSublawsContent :many
-SELECT id, created_at, updated_at, citation, sequence, anchor, content, embedding, keywords, document_id
+SELECT id, created_at, updated_at, citation, sequence, anchor, content, embedding, keywords, document_id, name
 FROM sublaws
 WHERE content ILIKE '%' || $1 || '%'
 ORDER BY created_at DESC
@@ -195,6 +201,7 @@ func (q *Queries) SearchSublawsContent(ctx context.Context, dollar_1 sql.NullStr
 			&i.Embedding,
 			&i.Keywords,
 			&i.DocumentID,
+			&i.Name,
 		); err != nil {
 			return nil, err
 		}
@@ -210,7 +217,7 @@ func (q *Queries) SearchSublawsContent(ctx context.Context, dollar_1 sql.NullStr
 }
 
 const searchSublawsKeywords = `-- name: SearchSublawsKeywords :many
-SELECT id, created_at, updated_at, citation, sequence, anchor, content, embedding, keywords, document_id
+SELECT id, created_at, updated_at, citation, sequence, anchor, content, embedding, keywords, document_id, name
 FROM sublaws
 WHERE keywords ILIKE '%' || $1 || '%'
 ORDER BY created_at DESC
@@ -236,6 +243,7 @@ func (q *Queries) SearchSublawsKeywords(ctx context.Context, dollar_1 sql.NullSt
 			&i.Embedding,
 			&i.Keywords,
 			&i.DocumentID,
+			&i.Name,
 		); err != nil {
 			return nil, err
 		}
@@ -252,13 +260,14 @@ func (q *Queries) SearchSublawsKeywords(ctx context.Context, dollar_1 sql.NullSt
 
 const updateSublaw = `-- name: UpdateSublaw :one
 UPDATE sublaws
-SET citation = $2, sequence = $3, anchor = $4, content = $5, embedding = $6, keywords = $7, document_id = $8, updated_at = NOW()
+SET name = $2, citation = $3, sequence = $4, anchor = $5, content = $6, embedding = $7, keywords = $8, document_id = $9, updated_at = NOW()
 WHERE id = $1
-RETURNING id, created_at, updated_at, citation, sequence, anchor, content, embedding, keywords, document_id
+RETURNING id, created_at, updated_at, citation, sequence, anchor, content, embedding, keywords, document_id, name
 `
 
 type UpdateSublawParams struct {
 	ID         uuid.UUID      `json:"id"`
+	Name       sql.NullString `json:"name"`
 	Citation   string         `json:"citation"`
 	Sequence   sql.NullString `json:"sequence"`
 	Anchor     sql.NullString `json:"anchor"`
@@ -271,6 +280,7 @@ type UpdateSublawParams struct {
 func (q *Queries) UpdateSublaw(ctx context.Context, arg UpdateSublawParams) (Sublaw, error) {
 	row := q.db.QueryRowContext(ctx, updateSublaw,
 		arg.ID,
+		arg.Name,
 		arg.Citation,
 		arg.Sequence,
 		arg.Anchor,
@@ -291,6 +301,7 @@ func (q *Queries) UpdateSublaw(ctx context.Context, arg UpdateSublawParams) (Sub
 		&i.Embedding,
 		&i.Keywords,
 		&i.DocumentID,
+		&i.Name,
 	)
 	return i, err
 }
