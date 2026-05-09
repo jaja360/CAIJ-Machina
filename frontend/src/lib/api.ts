@@ -244,9 +244,21 @@ export async function apiUploadLawFile(
 ): Promise<LawUploadResponse> {
   const formData = new FormData();
   formData.append("file", file);
-  return apiFetch<LawUploadResponse>("/api/laws", {
-    method: "PUT",
-    token,
-    body: formData,
-  });
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 60000);
+  try {
+    return await apiFetch<LawUploadResponse>("/api/laws?fast=1", {
+      method: "PUT",
+      token,
+      body: formData,
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error("Import timeout after 60 seconds");
+    }
+    throw err;
+  } finally {
+    window.clearTimeout(timeout);
+  }
 }
