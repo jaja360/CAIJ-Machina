@@ -1,6 +1,6 @@
 -- name: CreateAlert :one
-INSERT INTO alerts (user_id, client_id, contact_method, send_at, priority, law_change_id, message)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO alerts (user_id, client_id, contact_method, send_at, priority, law_change_id, sublaw_id, keywords, message)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING *;
 
 -- name: GetAlert :one

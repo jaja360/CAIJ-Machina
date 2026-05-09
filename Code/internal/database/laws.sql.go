@@ -61,6 +61,28 @@ func (q *Queries) DeleteLaw(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const getLatestLawByCitation = `-- name: GetLatestLawByCitation :one
+SELECT id, created_at, updated_at, citation, date_placed, date_replaced
+FROM laws
+WHERE citation = $1
+ORDER BY date_placed DESC NULLS LAST, created_at DESC
+LIMIT 1
+`
+
+func (q *Queries) GetLatestLawByCitation(ctx context.Context, citation string) (Law, error) {
+	row := q.db.QueryRowContext(ctx, getLatestLawByCitation, citation)
+	var i Law
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Citation,
+		&i.DatePlaced,
+		&i.DateReplaced,
+	)
+	return i, err
+}
+
 const getLaw = `-- name: GetLaw :one
 SELECT id, created_at, updated_at, citation, date_placed, date_replaced
 FROM laws

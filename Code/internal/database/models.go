@@ -30,16 +30,18 @@ type AgentConversationMessage struct {
 }
 
 type Alert struct {
-	ID            uuid.UUID     `json:"id"`
-	CreatedAt     time.Time     `json:"created_at"`
-	UpdatedAt     time.Time     `json:"updated_at"`
-	UserID        uuid.NullUUID `json:"user_id"`
-	ClientID      uuid.NullUUID `json:"client_id"`
-	ContactMethod string        `json:"contact_method"`
-	SendAt        time.Time     `json:"send_at"`
-	Priority      string        `json:"priority"`
-	LawChangeID   uuid.NullUUID `json:"law_change_id"`
-	Message       string        `json:"message"`
+	ID            uuid.UUID      `json:"id"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	UserID        uuid.NullUUID  `json:"user_id"`
+	ClientID      uuid.NullUUID  `json:"client_id"`
+	ContactMethod string         `json:"contact_method"`
+	SendAt        time.Time      `json:"send_at"`
+	Priority      string         `json:"priority"`
+	LawChangeID   uuid.NullUUID  `json:"law_change_id"`
+	Message       string         `json:"message"`
+	SublawID      uuid.NullUUID  `json:"sublaw_id"`
+	Keywords      sql.NullString `json:"keywords"`
 }
 
 type Client struct {

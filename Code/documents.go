@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -33,13 +35,10 @@ func (c *apiConfig) addDocuments(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusUnauthorized, "Missing or invalid token")
 		return
 	}
-	var in htmlIngestRequest
-	if err := json.NewDecoder(r.Body).Decode(&in); err != nil || strings.TrimSpace(in.HTML) == "" {
-		respondWithError(w, http.StatusBadRequest, "Invalid JSON")
+	in, err := decodeHTMLIngestRequest(r, "document.html")
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
-	}
-	if strings.TrimSpace(in.Filename) == "" {
-		in.Filename = "document.html"
 	}
 
 	chunked, err := c.ChunkHTMLLegislation(r.Context(), in.Filename, in.HTML, ChunkOptions{})
@@ -108,4 +107,39 @@ func (c *apiConfig) storeChunkAsDocument(ctx context.Context, document ChunkDocu
 		count++
 	}
 	return created, count, nil
+}
+
+func decodeHTMLIngestRequest(r *http.Request, defaultFilename string) (htmlIngestRequest, error) {
+	contentType := r.Header.Get("Content-Type")
+	if strings.HasPrefix(contentType, "multipart/form-data") {
+		if err := r.ParseMultipartForm(32 << 20); err != nil {
+			return htmlIngestRequest{}, err
+		}
+		file, header, err := r.FormFile("file")
+		if err != nil {
+			return htmlIngestRequest{}, err
+		}
+		defer file.Close()
+		contents, err := io.ReadAll(file)
+		if err != nil {
+			return htmlIngestRequest{}, err
+		}
+		filename := defaultFilename
+		if header != nil && strings.TrimSpace(header.Filename) != "" {
+			filename = header.Filename
+		}
+		return htmlIngestRequest{Filename: filename, HTML: string(contents)}, nil
+	}
+
+	var in htmlIngestRequest
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		return htmlIngestRequest{}, err
+	}
+	if strings.TrimSpace(in.HTML) == "" {
+		return htmlIngestRequest{}, fmt.Errorf("html is required")
+	}
+	if strings.TrimSpace(in.Filename) == "" {
+		in.Filename = defaultFilename
+	}
+	return in, nil
 }

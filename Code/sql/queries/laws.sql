@@ -8,6 +8,13 @@ SELECT *
 FROM laws
 WHERE id = $1;
 
+-- name: GetLatestLawByCitation :one
+SELECT *
+FROM laws
+WHERE citation = $1
+ORDER BY date_placed DESC NULLS LAST, created_at DESC
+LIMIT 1;
+
 -- name: ListLaws :many
 SELECT *
 FROM laws

@@ -61,6 +61,7 @@ JWT_SECRET=remplacer-par-un-secret-local
 AZURE_RESOURCE_NAME=nom-de-la-ressource-azure-openai
 AZURE_API_KEY=remplacer-par-une-cle-azure-openai
 AZURE_API_VERSION=2025-01-01-preview
+AZURE_EMBEDDING_MODEL=text-embedding-3-small
 PLATFORM=dev
 ```
 

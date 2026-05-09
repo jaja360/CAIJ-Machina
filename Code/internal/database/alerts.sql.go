@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,19 +27,21 @@ func (q *Queries) CountRecentAlerts(ctx context.Context) (int64, error) {
 }
 
 const createAlert = `-- name: CreateAlert :one
-INSERT INTO alerts (user_id, client_id, contact_method, send_at, priority, law_change_id, message)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, created_at, updated_at, user_id, client_id, contact_method, send_at, priority, law_change_id, message
+INSERT INTO alerts (user_id, client_id, contact_method, send_at, priority, law_change_id, sublaw_id, keywords, message)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id, created_at, updated_at, user_id, client_id, contact_method, send_at, priority, law_change_id, message, sublaw_id, keywords
 `
 
 type CreateAlertParams struct {
-	UserID        uuid.NullUUID `json:"user_id"`
-	ClientID      uuid.NullUUID `json:"client_id"`
-	ContactMethod string        `json:"contact_method"`
-	SendAt        time.Time     `json:"send_at"`
-	Priority      string        `json:"priority"`
-	LawChangeID   uuid.NullUUID `json:"law_change_id"`
-	Message       string        `json:"message"`
+	UserID        uuid.NullUUID  `json:"user_id"`
+	ClientID      uuid.NullUUID  `json:"client_id"`
+	ContactMethod string         `json:"contact_method"`
+	SendAt        time.Time      `json:"send_at"`
+	Priority      string         `json:"priority"`
+	LawChangeID   uuid.NullUUID  `json:"law_change_id"`
+	SublawID      uuid.NullUUID  `json:"sublaw_id"`
+	Keywords      sql.NullString `json:"keywords"`
+	Message       string         `json:"message"`
 }
 
 func (q *Queries) CreateAlert(ctx context.Context, arg CreateAlertParams) (Alert, error) {
@@ -49,6 +52,8 @@ func (q *Queries) CreateAlert(ctx context.Context, arg CreateAlertParams) (Alert
 		arg.SendAt,
 		arg.Priority,
 		arg.LawChangeID,
+		arg.SublawID,
+		arg.Keywords,
 		arg.Message,
 	)
 	var i Alert
@@ -63,6 +68,8 @@ func (q *Queries) CreateAlert(ctx context.Context, arg CreateAlertParams) (Alert
 		&i.Priority,
 		&i.LawChangeID,
 		&i.Message,
+		&i.SublawID,
+		&i.Keywords,
 	)
 	return i, err
 }
@@ -78,7 +85,7 @@ func (q *Queries) DeleteAlert(ctx context.Context, id uuid.UUID) error {
 }
 
 const getAlert = `-- name: GetAlert :one
-SELECT id, created_at, updated_at, user_id, client_id, contact_method, send_at, priority, law_change_id, message
+SELECT id, created_at, updated_at, user_id, client_id, contact_method, send_at, priority, law_change_id, message, sublaw_id, keywords
 FROM alerts
 WHERE id = $1
 `
@@ -97,12 +104,14 @@ func (q *Queries) GetAlert(ctx context.Context, id uuid.UUID) (Alert, error) {
 		&i.Priority,
 		&i.LawChangeID,
 		&i.Message,
+		&i.SublawID,
+		&i.Keywords,
 	)
 	return i, err
 }
 
 const listAlertsForClient = `-- name: ListAlertsForClient :many
-SELECT id, created_at, updated_at, user_id, client_id, contact_method, send_at, priority, law_change_id, message
+SELECT id, created_at, updated_at, user_id, client_id, contact_method, send_at, priority, law_change_id, message, sublaw_id, keywords
 FROM alerts
 WHERE client_id = $1
 ORDER BY send_at DESC
@@ -128,6 +137,8 @@ func (q *Queries) ListAlertsForClient(ctx context.Context, clientID uuid.NullUUI
 			&i.Priority,
 			&i.LawChangeID,
 			&i.Message,
+			&i.SublawID,
+			&i.Keywords,
 		); err != nil {
 			return nil, err
 		}
@@ -143,7 +154,7 @@ func (q *Queries) ListAlertsForClient(ctx context.Context, clientID uuid.NullUUI
 }
 
 const listAlertsForUser = `-- name: ListAlertsForUser :many
-SELECT id, created_at, updated_at, user_id, client_id, contact_method, send_at, priority, law_change_id, message
+SELECT id, created_at, updated_at, user_id, client_id, contact_method, send_at, priority, law_change_id, message, sublaw_id, keywords
 FROM alerts
 WHERE user_id = $1
 ORDER BY send_at DESC
@@ -169,6 +180,8 @@ func (q *Queries) ListAlertsForUser(ctx context.Context, userID uuid.NullUUID) (
 			&i.Priority,
 			&i.LawChangeID,
 			&i.Message,
+			&i.SublawID,
+			&i.Keywords,
 		); err != nil {
 			return nil, err
 		}
@@ -184,7 +197,7 @@ func (q *Queries) ListAlertsForUser(ctx context.Context, userID uuid.NullUUID) (
 }
 
 const listRecentAlerts = `-- name: ListRecentAlerts :many
-SELECT id, created_at, updated_at, user_id, client_id, contact_method, send_at, priority, law_change_id, message
+SELECT id, created_at, updated_at, user_id, client_id, contact_method, send_at, priority, law_change_id, message, sublaw_id, keywords
 FROM alerts
 WHERE created_at >= NOW() - INTERVAL '24 hours'
 ORDER BY created_at DESC
@@ -210,6 +223,8 @@ func (q *Queries) ListRecentAlerts(ctx context.Context) ([]Alert, error) {
 			&i.Priority,
 			&i.LawChangeID,
 			&i.Message,
+			&i.SublawID,
+			&i.Keywords,
 		); err != nil {
 			return nil, err
 		}

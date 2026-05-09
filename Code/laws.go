@@ -1,11 +1,8 @@
 package main
 
 import (
-	"context"
-	"database/sql"
-	"encoding/json"
-	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/google/uuid"
@@ -15,7 +12,6 @@ import (
 type lawIngestRequest struct {
 	Filename string `json:"filename"`
 	HTML     string `json:"html"`
-	OldLawID string `json:"old_law_id"`
 }
 
 func (c *apiConfig) getLaws(w http.ResponseWriter, r *http.Request) {
@@ -36,32 +32,32 @@ func (c *apiConfig) addLaws(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusUnauthorized, "Missing or invalid token")
 		return
 	}
-	var in lawIngestRequest
-	if err := json.NewDecoder(r.Body).Decode(&in); err != nil || strings.TrimSpace(in.HTML) == "" {
-		respondWithError(w, http.StatusBadRequest, "Invalid JSON")
+	in, err := decodeHTMLIngestRequest(r, "law.html")
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if strings.TrimSpace(in.Filename) == "" {
-		in.Filename = "law.html"
-	}
 
-	withAI := r.URL.Query().Get("with_ai") == "true"
-	opts := ChunkOptions{}
-	if withAI {
-		keywords, err := c.systemKeywordNames(r)
-		if err != nil {
-			respondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		if len(keywords) > 0 {
-			opts.IncludeDomains = true
-			opts.DomainKeywords = keywords
-		}
+	keywords, err := c.systemKeywordNames(r)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	opts := ChunkOptions{
+		DomainKeywords:    keywords,
+		IncludeDomains:    len(keywords) > 0,
+		EmbeddingModel:    azureEmbeddingModel(),
+		IncludeEmbeddings: azureEmbeddingModel() != "",
 	}
 
 	chunked, err := c.ChunkHTMLLegislation(r.Context(), in.Filename, in.HTML, opts)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	previousLaw, hasPreviousLaw, err := c.latestLawByCitation(r.Context(), chunked.Citation)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	law, sublaws, err := c.storeChunkDocument(r.Context(), chunked)
@@ -70,23 +66,15 @@ func (c *apiConfig) addLaws(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var oldLawID uuid.UUID
-	if strings.TrimSpace(in.OldLawID) != "" {
-		oldLawID, err = uuid.Parse(in.OldLawID)
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Invalid old_law_id")
-			return
-		}
-	}
 	lawChanges := []database.LawChange{}
-	if oldLawID != uuid.Nil {
-		lawChanges, err = c.createLawChangesForIngest(r.Context(), oldLawID, law.ID, sublaws)
+	if hasPreviousLaw {
+		lawChanges, err = c.createLawChangesForLawVersions(r.Context(), previousLaw.ID, law.ID)
 		if err != nil {
 			respondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 	}
-	alertsCount, err := c.analyzeLawAndCreateAlerts(r.Context(), law, sublaws, lawChanges)
+	alertsCount, err := c.createAlertsForLawChanges(r.Context(), lawChanges)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -98,6 +86,14 @@ func (c *apiConfig) addLaws(w http.ResponseWriter, r *http.Request) {
 		"law_changes_count": len(lawChanges),
 		"alerts_count":      alertsCount,
 	})
+}
+
+func azureEmbeddingModel() string {
+	model := strings.TrimSpace(os.Getenv("AZURE_EMBEDDING_MODEL"))
+	if model == "" {
+		return "text-embedding-3-small"
+	}
+	return model
 }
 
 func (c *apiConfig) getLawChanges(w http.ResponseWriter, r *http.Request) {
@@ -149,47 +145,6 @@ func (c *apiConfig) systemKeywordNames(r *http.Request) ([]string, error) {
 		}
 	}
 	return names, nil
-}
-
-func (c *apiConfig) createLawChangesForIngest(ctx context.Context, oldLawID, newLawID uuid.UUID, newSublaws []database.Sublaw) ([]database.LawChange, error) {
-	changes := []database.LawChange{}
-	for _, newSublaw := range newSublaws {
-		if !newSublaw.Anchor.Valid {
-			continue
-		}
-		oldSublaw, err := c.db.GetSublawByLawAndAnchor(ctx, database.GetSublawByLawAndAnchorParams{DocumentID: oldLawID, Anchor: newSublaw.Anchor})
-		if err != nil {
-			if err == sql.ErrNoRows {
-				continue
-			}
-			return nil, err
-		}
-		if oldSublaw.Content.String == newSublaw.Content.String {
-			continue
-		}
-		explanation := c.describeLawChange(oldSublaw, newSublaw)
-		change, err := c.db.CreateLawChange(ctx, database.CreateLawChangeParams{
-			Explanation: explanation,
-			LawIDOld:    oldLawID,
-			LawIDNew:    newLawID,
-			SubLawIDOld: oldSublaw.ID,
-			SubLawIDNew: newSublaw.ID,
-		})
-		if err != nil {
-			return nil, err
-		}
-		changes = append(changes, change)
-	}
-	return changes, nil
-}
-
-func (c *apiConfig) describeLawChange(oldSublaw, newSublaw database.Sublaw) string {
-	anchor := newSublaw.Anchor.String
-	prompt := fmt.Sprintf("Résume brièvement en français le changement juridique entre ces deux versions de l'article %s. Ancien: %s\n\nNouveau: %s", anchor, truncateForPrompt(oldSublaw.Content.String), truncateForPrompt(newSublaw.Content.String))
-	if response, err := c.getAzureResponse(prompt); err == nil && strings.TrimSpace(response) != "" {
-		return response
-	}
-	return fmt.Sprintf("Contenu modifié pour %s", anchor)
 }
 
 func truncateForPrompt(value string) string {
